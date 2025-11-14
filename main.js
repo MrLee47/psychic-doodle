@@ -360,7 +360,7 @@ function resolveCombatRound() {
         log(`Both attack! Initiating CLASH...`, 'log-special');
         handleClash(playerAbility, enemyAbility);
         
-        // This log should tell us if control returned from the crash gracefully
+        // This log should tell us if control returned from the clash gracefully
         log(`DEBUG: Clash finished. Resuming combat flow...`, 'log-debug'); 
         
         // CRITICAL FIX: Check for game over immediately after clash damage is applied
@@ -466,9 +466,15 @@ function executeSingleAction(attacker, ability, target) {
  */
 function handleClash(pAbility, eAbility) {
     try {
-        // 1. Determine final coin count (Strictly safe access)
-        const basePlayerCoins = pAbility && typeof pAbility.coins === 'number' ? pAbility.coins : 0;
-        const baseEnemyCoins = eAbility && typeof eAbility.coins === 'number' ? eAbility.coins : 0;
+        // CRITICAL CHECK: Ensure both abilities are defined before attempting to access properties
+        if (!pAbility || !eAbility) {
+            log(`CRITICAL: Missing Player(${!!pAbility}) or Enemy(${!!eAbility}) ability object in Clash.`, 'log-loss');
+            return; 
+        }
+
+        // 1. Determine final coin count (Using safe fallbacks)
+        const basePlayerCoins = typeof pAbility.coins === 'number' ? pAbility.coins : 0;
+        const baseEnemyCoins = typeof eAbility.coins === 'number' ? eAbility.coins : 0;
         
         // Striker Passive (safely calculate bonus)
         const strikerBonus = (gameState.player.id === 'striker' && gameState.player.baseStats.consecutive_rounds > 0) 
@@ -478,11 +484,11 @@ function handleClash(pAbility, eAbility) {
         const pCoins = basePlayerCoins + strikerBonus;
         const eCoins = baseEnemyCoins;
 
-        // Safely determine dice values
-        const pDice = pAbility && typeof pAbility.dice === 'number' ? pAbility.dice : 6;
-        const eDice = eAbility && typeof eAbility.dice === 'number' ? eAbility.dice : 6;
+        // Safely determine dice values (Using safe fallbacks, dice MUST be > 0 for rollDie)
+        const pDice = typeof pAbility.dice === 'number' && pAbility.dice > 0 ? pAbility.dice : 1;
+        const eDice = typeof eAbility.dice === 'number' && eAbility.dice > 0 ? eAbility.dice : 1;
 
-        // NEW LOG: Check all 4 variables are valid before continuing
+        // NEW DETAILED LOG
         log(`DEBUG CLASH PARAMS: PCoins(${pCoins}) ECoins(${eCoins}) PDice(${pDice}) EDice(${eDice})`, 'log-debug'); 
 
         // 2. Calculate Clash Values
