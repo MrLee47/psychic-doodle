@@ -383,7 +383,7 @@ const CHARACTERS = [
         description: 'A wrestling powerhouse who controls the battlefield.',
         baseStats: { maxHP: 130, defense: 3, level: 1, currentHP: 130, status: 'Alive', isGrappling: false, grapple_die: 8, effects: [], speed: 1, gender: 'Male' },
         // FIX: Increased passive dice from 4 to 10 for more noticeable bonus damage.
-        uniquePassive: { name: 'The Old One, Two', type: 'ClashWinBonus', dice: 10 }, 
+        uniquePassive: { name: 'The Old One-Two', type: 'ClashWinBonus', dice: 10 }, 
         abilities: [
             { name: 'Haymaker', type: 'ATTACK', damageType: 'Physical', baseAttack: 7, dice: 10, coins: 1, },
             { name: 'Grapple', type: 'SPECIAL', effect: 'Rolls d10 vs. target\'s Grapple Die. Success applies Grappled status. Target auto-loses next clash.', statusApplied: 'Grappled', baseAttack: 0, dice: 10, coins: 0, targetGrappleDie: 8 },
