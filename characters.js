@@ -15,7 +15,7 @@ export const Characters = [
     {
         id: 'striker',
         name: 'Striker',
-        description: 'A damage specialist who scales in power as the fight goes on.',
+        description: 'A damage specialist who scales in power the longer a fight lasts.',
         baseStats: {
             maxHP: 110,
             defense: 2,
@@ -53,7 +53,7 @@ export const Characters = [
     {
         id: 'shutenmaru',
         name: 'Shuten-Maru',
-        description: 'A psycho demon who has unmatched survivability.',
+        description: 'A swift, ghostly fighter focused on survivability and counter-play.',
         baseStats: {
             maxHP: 100,
             defense: 1,
@@ -91,7 +91,7 @@ export const Characters = [
     {
         id: 'balter',
         name: 'Balter',
-        description: 'A muscular powerhouse who controls the battlefield through grappling.',
+        description: 'A wrestling powerhouse who controls the battlefield through grappling.',
         baseStats: {
             maxHP: 130,
             defense: 3,
@@ -101,7 +101,7 @@ export const Characters = [
             grapple_die: 8, // The die size Balter uses for defense against Grapple
         },
         uniquePassive: { 
-            name: 'Walk It Off', 
+            name: 'The Old One-Two', 
             effect: 'If Balter passes his turn, he gains 10 HP and cures 1 Status Condition.',
             type: 'PassActionHeal',
             healAmount: 10,
@@ -141,8 +141,8 @@ export const Characters = [
 
     // --- 4. Zectus Maximus (Cycle: Weapon Rotation & Homogenous: Conditional Coins) ---
     {
-        id: 'zect',
-        name: 'Zect Sanctus',
+        id: 'zectus',
+        name: 'Zectus Maximus',
         description: 'A versatile warrior whose damage type changes frequently.',
         baseStats: {
             maxHP: 105,
