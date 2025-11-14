@@ -709,7 +709,8 @@ function checkGameOver() {
 function renderCombatActions() {
     actionButtonsDiv.innerHTML = '';
     const playerAbilities = gameState.player.abilities;
-    const isGrappling = gameState.gameState.enemy.baseStats.effects.includes('Grappled'); // Check enemy status for Grappled
+    // FIX: Removed accidental double access "gameState.gameState"
+    const isGrappling = gameState.enemy.baseStats.effects.includes('Grappled'); 
     const currentWeapon = gameState.player.baseStats.tri_sword_state; 
 
     playerAbilities.forEach(ability => {
