@@ -91,3 +91,29 @@ button:hover {
 
 button:active {
     transform
+/* New CSS for the Settings Button */
+#status-bar {
+    /* Make status bar a positioning context */
+    position: relative; 
+    display: flex; /* Allow content to align */
+    justify-content: space-between; /* Push items to ends */
+    align-items: center;
+    /* ... rest of status bar styles ... */
+}
+
+.settings-button {
+    /* General button reset to look like a small icon */
+    background: none;
+    border: none;
+    color: #555; /* Match status bar text */
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1; /* Keep it centered */
+    margin-left: 10px;
+}
+
+.settings-button:hover {
+    color: #4a2d1e; /* Highlight on hover */
+    transform: none; /* No lift effect for this icon */
+}
