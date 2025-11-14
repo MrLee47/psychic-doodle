@@ -232,8 +232,9 @@
                 <p id="dialogue-text" class="text-lg italic">Welcome to the adventure!</p>
             </div>
 
-            <!-- COMBAT LOG (Increased Height) -->
-            <div class="section-box p-4 h-[400px] overflow-y-auto flex flex-col-reverse">
+            <!-- COMBAT LOG (Smart Scrolling Implemented) -->
+            <!-- ADDED ID FOR SCROLL MANAGEMENT: log-scroll-container -->
+            <div id="log-scroll-container" class="section-box p-4 h-[400px] overflow-y-auto">
                 <h3 class="text-xl font-bold border-b border-gray-300 pb-2 mb-2 text-text-color">Event Log</h3>
                 <div id="combat-log" class="space-y-1">
                     <!-- Combat/Dungeon Log Entries Here -->
@@ -425,6 +426,9 @@ const themeOptionBtns = document.querySelectorAll('.theme-option-btn');
 const dialogueText = document.getElementById('dialogue-text');
 const actionButtonsDiv = document.getElementById('action-buttons');
 const combatLog = document.getElementById('combat-log');
+// NEW: Reference to the scrollable container
+const logScrollContainer = document.getElementById('log-scroll-container'); 
+
 const passTurnBtn = document.getElementById('pass-turn-btn'); 
 const actionHeader = document.getElementById('action-header');
 const visualContext = document.getElementById('visual-context'); 
@@ -524,13 +528,28 @@ function updateHealthDisplay(entity, ui) {
     }
 }
 
+/**
+ * UPDATED: Log function now appends to the bottom and scrolls down only if the user is at the bottom.
+ */
 function log(message, className = '') {
+    // Check if the user is currently scrolled to the bottom (with a small tolerance)
+    const isScrolledToBottom = logScrollContainer.scrollHeight - logScrollContainer.clientHeight <= logScrollContainer.scrollTop + 1;
+
     const logDiv = document.createElement('p');
     logDiv.classList.add('log-entry', className);
     logDiv.textContent = `[T${gameState.turn}] ${message}`;
-    combatLog.prepend(logDiv);
+    
+    // Append new log entry to the bottom (newest messages at the bottom)
+    combatLog.appendChild(logDiv);
+    
+    // Remove oldest entries (now from the top)
     while (combatLog.children.length > 50) {
-        combatLog.removeChild(combatLog.lastChild);
+        combatLog.removeChild(combatLog.firstChild);
+    }
+
+    // Scroll to the bottom if the user was already at the bottom
+    if (isScrolledToBottom) {
+        logScrollContainer.scrollTop = logScrollContainer.scrollHeight;
     }
 }
 
@@ -543,7 +562,8 @@ function runSlotAnimation(elementId, maxVal, isCoin) {
 
     let interval;
     const animationStart = performance.now();
-    const duration = 2000; // 2 seconds spin
+    // Spin duration increased from 2000ms to 3000ms
+    const duration = 3000; 
 
     const spin = () => {
         if (performance.now() - animationStart < duration) {
@@ -610,7 +630,7 @@ function startClashVisuals(pDiceMax, pCoins, eDiceMax, eCoins, pFinalRoll, pFina
         const eCoinInterval = runSlotAnimation(`e-${clashCoinSlotId}`, eCoins, true);
 
 
-        // 2. Wait for 2 seconds, then stop and display final results
+        // 2. Wait for 3 seconds (increased), then stop and display final results
         setTimeout(() => {
             clearInterval(pDiceInterval);
             clearInterval(eDiceInterval);
@@ -624,16 +644,16 @@ function startClashVisuals(pDiceMax, pCoins, eDiceMax, eCoins, pFinalRoll, pFina
             document.getElementById(`e-${clashCoinSlotId}`).innerHTML = coinEmoji(eCoins, eFinalCoin);
             
             // Update context
-            clashVisualizer.querySelector('p.mt-8').textContent = 'Results are in!';
+            clashVisualizer.querySelector('p.mt-8').textContent = 'Results are in! (Closing in 1s)';
 
-            // 3. Wait 0.5 seconds for final result display before returning
+            // 3. Wait 1 second (increased) for final result display before returning
             setTimeout(() => {
                 clashVisualizer.classList.add('hidden');
                 clashVisualizer.classList.remove('flex');
                 resolve();
-            }, 500);
+            }, 1000); // Total animation time is 4.0 seconds (3s spin + 1s pause)
 
-        }, 2000); // Total animation time is 2.5 seconds (2s spin + 0.5s pause)
+        }, 3000); 
     });
 }
 
@@ -742,7 +762,7 @@ function startNewGame(charId) {
     // 4. Clear UI and begin the dungeon
     combatLog.innerHTML = '';
     dialogueText.textContent = `Welcome, ${gameState.player.name}, to the ancient catacombs of Erebos!`;
-    log(`The adventure begins in Erebos!`, 'log-special');
+    log(`Welcome, ${gameState.player.name}, to the ancient catacombs of Erebos!`, 'log-special');
 
     // 5. Start Dungeon Progression
     DungeonManager.nextRoom();
@@ -1107,12 +1127,15 @@ function executeSingleAction(attacker, ability, target) {
             const targetGrappleDie = target.baseStats.grapple_die || 8;
             const targetRoll = rollDie(targetGrappleDie);
             
+            // NEW LOGGING: Show Grapple Rolls
+            log(`Grapple Roll: ${attacker.name} d${ability.dice || 10} -> **${attackerRoll}** | ${target.name} d${targetGrappleDie} -> **${targetRoll}**`, 'log-special');
+
             if (attackerRoll > targetRoll) {
                 if (!Array.isArray(target.baseStats.effects)) { target.baseStats.effects = []; }
                 target.baseStats.effects.push('Grappled');
                 log(`${attacker.name} successfully grapples ${target.name}! ${target.name} auto-loses the next clash.`, 'log-win');
             } else {
-                log(`${attacker.name} fails to grapple ${target.name}. (Roll: ${attackerRoll} vs ${targetRoll})`, 'log-loss');
+                log(`${attacker.name} fails to grapple ${target.name}.`, 'log-loss');
             }
         }
         
@@ -1130,7 +1153,14 @@ function executeSingleAction(attacker, ability, target) {
         log(`${attacker.name} cycles weapon to ${weapons[nextIndex]}. Deals ${damage} damage to ${target.name}!`, 'log-win');
 
     } else if (ability.type === 'ATTACK') {
-        applyDamage(ability, attacker, target);
+        // NEW: Generate rolls here for logging
+        const diceRoll = rollDie(ability.dice || 1);
+        const coinBonus = rollCoins(ability.coins || 0);
+
+        // NEW LOGGING: Show attack rolls
+        log(`Attack Rolls: D${ability.dice || 1} -> **${diceRoll}** | Coins (${ability.coins || 0}) -> **${coinBonus}**`, 'log-damage');
+
+        applyDamage(ability, attacker, target, coinBonus, diceRoll);
         
         if (ability.statusEffect === 'Stagger') {
             if (!Array.isArray(target.baseStats.effects)) { target.baseStats.effects = []; }
@@ -1191,6 +1221,11 @@ async function handleClash(pAbility, eAbility) {
         const playerCoinBonus = rollCoins(pCoins); 
         const enemyCoinBonus = rollCoins(eCoins); 
 
+        // NEW LOGGING: Show Clash Rolls
+        log(`${gameState.player.name} Clash Rolls: D${pDice} -> **${playerRoll}** | Coins (${pCoins}) -> **${playerCoinBonus}**`, 'log-damage');
+        log(`${gameState.enemy.name} Clash Rolls: D${eDice} -> **${enemyRoll}** | Coins (${eCoins}) -> **${enemyCoinBonus}**`, 'log-damage');
+
+
         // --- NEW: WAIT FOR VISUALIZATION TO COMPLETE ---
         await startClashVisuals(pDice, pCoins, eDice, eCoins, playerRoll, playerCoinBonus, enemyRoll, enemyCoinBonus); 
 
@@ -1215,14 +1250,14 @@ async function handleClash(pAbility, eAbility) {
             winnerAbility = resolvedPAbility;
             winnerCoinBonus = playerCoinBonus;
             winnerDiceRoll = playerRoll;
-            log(`${winner.name} wins the clash! (Clash: ${playerClashValue} vs ${enemyClashValue})`, 'log-win');
+            log(`${winner.name} wins the clash! (Clash: **${playerClashValue}** vs **${enemyClashValue}**)`, 'log-win');
         } else {
             winner = gameState.enemy;
             loser = gameState.player;
             winnerAbility = eAbility;
             winnerCoinBonus = enemyCoinBonus; 
             winnerDiceRoll = enemyRoll;  
-            log(`${winner.name} wins the clash! (Clash: ${enemyClashValue} vs ${playerClashValue})`, 'log-loss');     
+            log(`${winner.name} wins the clash! (Clash: **${enemyClashValue}** vs **${playerClashValue}**)`, 'log-loss');     
         }
 
 
@@ -1238,11 +1273,13 @@ async function handleClash(pAbility, eAbility) {
             const bonusDiceMax = winner.uniquePassive.dice;
             const bonusDamageRoll = rollDie(bonusDiceMax);
             
+            log(`Passive Roll: d${bonusDiceMax} -> **${bonusDamageRoll}**`, 'log-damage');
+
             // UPDATED: Balter's passive ignores defense
             const bonusDamage = bonusDamageRoll; 
             
             loser.baseStats.currentHP = Math.max(0, loser.baseStats.currentHP - bonusDamage);
-            log(`Balter follows up with "The Old One, Two"! Roll d${bonusDiceMax} (${bonusDamageRoll}). **Ignores Defense**, dealing ${bonusDamage} extra damage!`, 'log-win');
+            log(`Balter follows up with "The Old One, Two"! **Ignores Defense**, dealing ${bonusDamage} extra damage!`, 'log-win');
         }
         
         // 8. Apply Stagger to LOSER
@@ -1290,19 +1327,19 @@ function applyDamage(ability, attacker, target, coinBonus = rollCoins(ability.co
     } else {
         finalDamage = Math.max(0, damage - defense);
 
-        // NEW LOGGING: Detail the defense subtraction
+        // LOGGING: Detail the defense subtraction
         if (defense > 0) {
             const defenseLog = finalDamage === 0 ? "Damage blocked!" : `${finalDamage} Final Damage.`;
-            log(`[Calculation: ${ability.damageType}] Raw Power (${damage}) - ${defense} Defense = ${defenseLog}`, 'log-damage');
+            log(`[Calculation: ${ability.damageType}] Raw Power (**${damage}**) - **${defense}** Defense = ${defenseLog}`, 'log-damage');
         } else {
-             log(`[Calculation: ${ability.damageType}] Raw Power (${damage}). Defense is 0.`, 'log-damage');
+             log(`[Calculation: ${ability.damageType}] Raw Power (**${damage}**). Defense is 0.`, 'log-damage');
         }
     }
 
     target.baseStats.currentHP = Math.max(0, target.baseStats.currentHP - finalDamage);
     
     // Original result line, now secondary to the calculation log
-    log(`${attacker.name} strikes with ${ability.name}! Dealt ${finalDamage} damage.`, 'log-damage');
+    log(`${attacker.name} strikes with ${ability.name}! Dealt **${finalDamage}** damage.`, 'log-damage');
     
     if (target.id === 'shutenmaru') {
         target.baseStats.lastDamageTaken = finalDamage; 
