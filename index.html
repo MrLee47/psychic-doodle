@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chronicles of Heroes</title>
-    <!-- We will use a link tag to reference the CSS -->
     <link rel="stylesheet" href="style.css"> 
 </head>
 <body class="theme-default">
@@ -28,14 +27,14 @@
                 <span id="current-status">Alive</span>
             </div>
 
-            <!-- 3. Settings Button -->
+            <!-- 3. Settings Button (In the top-right corner of the status bar) -->
             <button id="settings-btn" class="icon-button">⚙️</button>
         </header>
 
         <main id="main-area">
             <div id="visual-novel-area">
                 <div id="character-portrait">
-                    <!-- Placeholder for character portraits (to be added later) -->
+                    <!-- Placeholder for character portraits -->
                 </div>
                 <p id="main-text">The journey begins...</p>
             </div>
@@ -63,18 +62,18 @@
         <p class="footer-text">Built for friends & epic tales</p>
     </div>
 
-    <!-- THE SETTINGS MODAL (Hidden by default) -->
-    <div id="settings-modal" class="modal hidden">
-        <div class="modal-content">
+    <!-- THE SETTINGS PANEL (Slides in from top-right) -->
+    <div id="settings-panel" class="settings-panel hidden">
+        <div class="panel-content">
             <h2>Settings</h2>
             <div class="theme-selector">
                 <h3>Select Theme:</h3>
-                <button class="theme-option-btn" data-theme="default">Default (Cream)</button>
-                <button class="theme-option-btn" data-theme="retro">Retro (Green)</button>
-                <button class="theme-option-btn" data-theme="dark">Dark (Gray)</button>
-                <button class="theme-option-btn" data-theme="light">Light (Blue)</button>
+                <button class="theme-option-btn" data-theme="default">Default (Cream/Fantasy)</button>
+                <button class="theme-option-btn" data-theme="retro">Retro (Black/Green)</button>
+                <button class="theme-option-btn" data-theme="dark">Dark (Black/Gray)</button>
+                <button class="theme-option-btn" data-theme="light">Light (White/Blue)</button>
             </div>
-            <button id="close-modal-btn">Close</button>
+            <button id="close-panel-btn">Close</button>
         </div>
     </div>
 
