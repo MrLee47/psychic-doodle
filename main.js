@@ -135,7 +135,7 @@ const rollDie = (max) => Math.floor(Math.random() * max) + 1;
 
 const rollCoins = (count) => {
     let sum = 0;
-    // Ensure count is a positive number
+    // Ensure count is a non-negative integer
     const finalCount = Math.max(0, parseInt(count, 10) || 0); 
     
     for (let i = 0; i < finalCount; i++) {
@@ -347,10 +347,11 @@ function resolveCombatRound() {
 
     if (checkGameOver()) return;
 
-    const pType = playerAbility.type;
-    const eType = enemyAbility.type;
-    const pSpeed = gameState.player.baseStats.speed;
-    const eSpeed = gameState.enemy.baseStats.speed;
+    // Safely check types and speeds
+    const pType = playerAbility ? playerAbility.type : 'NONE';
+    const eType = enemyAbility ? enemyAbility.type : 'NONE';
+    const pSpeed = gameState.player.baseStats.speed || 0;
+    const eSpeed = gameState.enemy.baseStats.speed || 0;
     
     log(`Player Speed: ${pSpeed}, Enemy Speed: ${eSpeed}.`, 'log-special');
 
@@ -410,6 +411,7 @@ function resolveCombatRound() {
  */
 function executeSingleAction(attacker, ability, target) {
     if (target.baseStats.currentHP <= 0) return; // Target is already defeated by the first action
+    if (!ability) return; // Safety check
 
     if (ability.type === 'DEFENSE') {
         if (ability.defenseEffect === 'NegateNextHit') {
@@ -422,7 +424,7 @@ function executeSingleAction(attacker, ability, target) {
     } else if (ability.type === 'SPECIAL') {
         // Balter's Grapple logic
         if (ability.name === 'Grapple') {
-            const attackerRoll = rollDie(ability.dice);
+            const attackerRoll = rollDie(ability.dice || 10); // Use 10 as default dice
             const targetGrappleDie = target.baseStats.grapple_die || 8;
             const targetRoll = rollDie(targetGrappleDie);
             
@@ -445,7 +447,7 @@ function executeSingleAction(attacker, ability, target) {
         attacker.baseStats.tri_sword_state = weapons[nextIndex];
         
         // Damage is applied to the target
-        const damage = ability.baseAttack; 
+        const damage = ability.baseAttack || 2; 
         target.baseStats.currentHP = Math.max(0, target.baseStats.currentHP - damage); 
         log(`${attacker.name} cycles weapon to ${weapons[nextIndex]}. Deals ${damage} damage to ${target.name}!`, 'log-win');
 
@@ -461,24 +463,33 @@ function executeSingleAction(attacker, ability, target) {
  */
 function handleClash(pAbility, eAbility) {
     try {
-        // 1. Determine final coin count (Striker passive applied here)
-        // Coins = Base Coins + Passive Bonus
-        const pCoins = pAbility.coins + (gameState.player.id === 'striker' ? gameState.player.baseStats.consecutive_rounds : 0);
-        const eCoins = eAbility.coins;
+        // 1. Determine final coin count (Strictly safe access)
+        const basePlayerCoins = pAbility && typeof pAbility.coins === 'number' ? pAbility.coins : 0;
+        const baseEnemyCoins = eAbility && typeof eAbility.coins === 'number' ? eAbility.coins : 0;
+        
+        // Striker Passive (safely calculate bonus)
+        const strikerBonus = (gameState.player.id === 'striker' && gameState.player.baseStats.consecutive_rounds > 0) 
+            ? gameState.player.baseStats.consecutive_rounds 
+            : 0;
 
-        // DIAGNOSTIC LOG: Check if calculation point is reached
-        log(`DEBUG CLASH COINS: P(${pCoins}) vs E(${eCoins})`, 'log-debug'); 
+        const pCoins = basePlayerCoins + strikerBonus;
+        const eCoins = baseEnemyCoins;
+
+        // Safely determine dice values
+        const pDice = pAbility && typeof pAbility.dice === 'number' ? pAbility.dice : 6;
+        const eDice = eAbility && typeof eAbility.dice === 'number' ? eAbility.dice : 6;
+
 
         // 2. Calculate Clash Values
-        const playerRoll = rollDie(pAbility.dice);
+        const playerRoll = rollDie(pDice);
         const playerCoinBonus = rollCoins(pCoins);
         const playerClashValue = BASE_CLASH_VALUE + playerRoll + playerCoinBonus;
 
-        const enemyRoll = rollDie(eAbility.dice);
+        const enemyRoll = rollDie(eDice);
         const enemyCoinBonus = rollCoins(eCoins);
         const enemyClashValue = BASE_CLASH_VALUE + enemyRoll + enemyCoinBonus;
 
-        log(`Clash! P Roll: ${playerRoll}+${playerCoinBonus} = ${playerClashValue} | E Roll: ${enemyRoll}+${enemyCoinBonus} = ${enemyClashValue}`);
+        log(`Clash! P Roll: ${playerRoll} (+${playerCoinBonus} coins) = ${playerClashValue} | E Roll: ${enemyRoll} (+${enemyCoinBonus} coins) = ${enemyClashValue}`);
 
         let winner, loser, winnerAbility;
 
@@ -506,7 +517,13 @@ function handleClash(pAbility, eAbility) {
         const coinBonus = winner.id === gameState.player.id ? playerCoinBonus : enemyCoinBonus;
         const diceRoll = winner.id === gameState.player.id ? playerRoll : enemyRoll;
 
-        applyDamage(winnerAbility, winner, loser, coinBonus, diceRoll);
+        // Check winner ability before applying damage (safety)
+        if (winnerAbility) {
+            applyDamage(winnerAbility, winner, loser, coinBonus, diceRoll);
+        } else {
+            log(`Clash finished but winner ability was undefined. No damage applied.`, 'log-loss');
+        }
+
         
         // --- Balter's "The Old One, Two" Passive ---
         if (winner.id === 'balter' && winner.uniquePassive.type === 'ClashWinBonus' && loser.baseStats.currentHP > 0) {
@@ -517,6 +534,7 @@ function handleClash(pAbility, eAbility) {
             log(`Balter follows up with "The Old One, Two" for an extra ${bonusDamage} damage! (d${winner.uniquePassive.dice} roll: ${bonusDamageRoll})`, 'log-win');
         }
     } catch (error) {
+        // This should now definitely catch any error if it occurs after the log in resolveCombatRound
         log(`CRITICAL CLASH ERROR: Clash resolution failed. Check console for details.`, 'log-loss');
         console.error("Clash resolution failed:", error);
     }
@@ -527,7 +545,7 @@ function handleClash(pAbility, eAbility) {
  */
 function applyDamage(ability, attacker, target, coinBonus = rollCoins(ability.coins), diceRoll = rollDie(ability.dice)) {
     // 1. Calculate base damage
-    let damage = ability.baseAttack + coinBonus;
+    let damage = (ability.baseAttack || 0) + (coinBonus || 0); // Safety check baseAttack/coinBonus
     
     // 2. Apply target defense reduction
     let finalDamage = Math.max(0, damage - target.baseStats.defense);
