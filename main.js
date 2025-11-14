@@ -37,7 +37,6 @@ const themeOptionBtns = document.querySelectorAll('.theme-option-btn');
 const dialogueText = document.getElementById('dialogue-text');
 const actionButtonsDiv = document.getElementById('action-buttons');
 const combatLog = document.getElementById('combat-log');
-// NOTE: passTurnBtn is no longer used for Balter's passive, but the element remains in HTML.
 const passTurnBtn = document.getElementById('pass-turn-btn'); 
 
 // Status Bar References (Dynamic)
@@ -94,7 +93,6 @@ const CHARACTERS = [
         name: 'Balter',
         description: 'A wrestling powerhouse who controls the battlefield.',
         baseStats: { maxHP: 130, defense: 3, level: 1, currentHP: 130, status: 'Alive', isGrappling: false, grapple_die: 8, effects: [], speed: 1 },
-        // UPDATED PASSIVE: The Old One, Two - automatic d4 attack if Balter wins the clash
         uniquePassive: { name: 'The Old One, Two', type: 'ClashWinBonus', dice: 4 }, 
         abilities: [
             { name: 'Haymaker', type: 'ATTACK', damageType: 'Physical', baseAttack: 7, dice: 10, coins: 1, },
@@ -111,9 +109,7 @@ const CHARACTERS = [
         baseStats: { maxHP: 105, defense: 2, level: 1, currentHP: 105, status: 'Alive', tri_sword_state: 'Scythe', effects: [], speed: 2 }, 
         uniquePassive: { name: 'Homogenous', type: 'ConditionalCoin', condition: { target_gender: 'Female' }, coinBonus: 2 },
         abilities: [
-            // Cycle now deals damage to the target
             { name: 'Cycle', type: 'SWITCH', effect: 'Cycles Tri-Sword: Scythe -> Trident -> Hammer. Deals 2 damage to target on activation.', baseAttack: 2, dice: 0, coins: 0, nextState: 'Trident' },
-            // All Tri-Sword attacks are now always visible and available
             { name: 'Tri-Sword: Scythe', type: 'ATTACK', damageType: 'Necrotic', baseAttack: 6, dice: 8, coins: 1, weaponState: 'Scythe' },
             { name: 'Tri-Sword: Trident', type: 'ATTACK', damageType: 'Physical', baseAttack: 7, dice: 10, coins: 1, weaponState: 'Trident' },
             { name: 'Tri-Sword: Hammer', type: 'ATTACK', damageType: 'Force', baseAttack: 8, dice: 12, coins: 1, weaponState: 'Hammer' }
@@ -359,6 +355,9 @@ function resolveCombatRound() {
     if (pType === 'ATTACK' && eType === 'ATTACK') {
         log(`Both attack! Initiating CLASH...`, 'log-special');
         handleClash(playerAbility, enemyAbility);
+        
+        // FIX: Check for game over immediately after clash damage is applied
+        if (checkGameOver()) return; 
     
     // Case 2: Mixed Actions -> Speed determines priority
     } else {
@@ -499,7 +498,7 @@ function handleClash(pAbility, eAbility) {
     applyDamage(winnerAbility, winner, loser, coinBonus, diceRoll);
     
     // --- Balter's "The Old One, Two" Passive ---
-    if (winner.id === 'balter' && winner.uniquePassive.type === 'ClashWinBonus') {
+    if (winner.id === 'balter' && winner.uniquePassive.type === 'ClashWinBonus' && loser.baseStats.currentHP > 0) {
         const bonusDamageRoll = rollDie(winner.uniquePassive.dice);
         // Apply loser's defense to the bonus hit
         const bonusDamage = Math.max(0, bonusDamageRoll - loser.baseStats.defense); 
@@ -560,7 +559,7 @@ function endTurnCleanup() {
         gameState.player.baseStats.consecutive_rounds++;
     }
 
-    // Check for death
+    // Check for death (redundant check, but safer)
     if (checkGameOver()) return;
 
     // Reset actions for the next turn
@@ -614,7 +613,6 @@ function renderCombatActions() {
         if (gameState.player.id === 'balter') {
             const isPiledriver = ability.name === 'Piledriver';
             
-            // Haymaker is NOT hidden if Piledriver is available (Balter must choose between them)
             // Piledriver is hidden if not grappling
             if (isPiledriver && !isGrappling) {
                 isAvailable = false;
