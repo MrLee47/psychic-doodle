@@ -360,6 +360,10 @@ function resolveCombatRound() {
         log(`Both attack! Initiating CLASH...`, 'log-special');
         handleClash(playerAbility, enemyAbility);
         
+        // --- NEW CRITICAL DIAGNOSTIC LOG ---
+        log(`DEBUG: Clash finished. Resuming combat flow...`, 'log-debug'); 
+        // -----------------------------------
+        
         // CRITICAL FIX: Check for game over immediately after clash damage is applied
         if (checkGameOver()) return; 
     
@@ -479,6 +483,9 @@ function handleClash(pAbility, eAbility) {
         const pDice = pAbility && typeof pAbility.dice === 'number' ? pAbility.dice : 6;
         const eDice = eAbility && typeof eAbility.dice === 'number' ? eAbility.dice : 6;
 
+        // LOG TO CONFIRM ALL VARIABLES ARE SAFE NUMBERS BEFORE CALCULATION
+        log(`DEBUG CLASH COINS: P(${pCoins}) vs E(${eCoins}) | Dice: P(${pDice}) vs E(${eDice})`, 'log-debug'); 
+
 
         // 2. Calculate Clash Values
         const playerRoll = rollDie(pDice);
@@ -489,6 +496,7 @@ function handleClash(pAbility, eAbility) {
         const enemyCoinBonus = rollCoins(eCoins);
         const enemyClashValue = BASE_CLASH_VALUE + enemyRoll + enemyCoinBonus;
 
+        // This log confirms the calculation succeeded
         log(`Clash! P Roll: ${playerRoll} (+${playerCoinBonus} coins) = ${playerClashValue} | E Roll: ${enemyRoll} (+${enemyCoinBonus} coins) = ${enemyClashValue}`);
 
         let winner, loser, winnerAbility;
