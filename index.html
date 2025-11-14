@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* Reverted to high-contrast, simple style for clarity */
+        /* Reverted to high-contrast, simple style for clarity, matching the request for a simple, stacked UI */
         :root {
             --primary-bg: #111827; /* Deep Blue/Black */
             --section-bg: #1f2937; /* Dark Gray */
@@ -103,7 +103,6 @@
             <h2 class="text-2xl font-bold">Settings</h2>
             <div class="space-y-2">
                 <p class="font-semibold">Theme Selection:</p>
-                <!-- Retaining theme buttons but linking them to a single theme for consistency -->
                 <div class="flex space-x-2">
                     <button data-theme="default" class="theme-option-btn action-btn px-3 py-1 text-sm">Default</button>
                     <button data-theme="retro" class="theme-option-btn action-btn px-3 py-1 text-sm" disabled>Retro (WIP)</button>
@@ -122,7 +121,7 @@
         <button id="open-settings-menu-btn" class="action-btn w-64">Settings</button>
     </div>
 
-    <!-- CHARACTER SELECT SCREEN -->
+    <!-- CHARACTER SELECT SCREEN (UI Retained) -->
     <div id="character-select-screen" class="hidden w-full max-w-4xl">
         <h2 class="text-3xl font-bold mb-6 text-center text-accent-color">Select Your Hero</h2>
         <div id="character-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -133,10 +132,10 @@
         </div>
     </div>
 
-    <!-- MAIN GAME CONTAINER (Combat & Dungeon Views) -->
-    <div id="game-container" class="hidden w-full max-w-5xl space-y-6">
+    <!-- MAIN GAME CONTAINER (Combat & Dungeon Views) - REVERTED UI -->
+    <div id="game-container" class="hidden w-full max-w-2xl space-y-6">
 
-        <!-- STATUS BARS & HEADER (Simplified Full-Width Layout) -->
+        <!-- STATUS BARS & HEADER -->
         <div id="status-bars" class="space-y-4">
             <!-- Player Status -->
             <div id="player-status-card" class="section-box p-4 space-y-2">
@@ -171,28 +170,24 @@
             <p id="dialogue-text" class="text-lg italic mt-2">Welcome to the adventure!</p>
         </div>
 
-        <!-- LOG & ACTION SECTION (Log is now stacked above Actions) -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            <!-- RIGHT COLUMN: COMBAT LOG (Now first on mobile) -->
-            <div class="section-box p-4 lg:col-span-1 h-64 overflow-y-auto flex flex-col-reverse">
-                <h3 class="text-xl font-bold border-b border-gray-600 pb-2 mb-2 text-white">Event Log</h3>
-                <div id="combat-log" class="space-y-1">
-                    <!-- Combat/Dungeon Log Entries Here -->
-                </div>
-            </div>
-
-            <!-- LEFT COLUMN: COMBAT ACTIONS / DUNGEON INTERACTION (Now second on mobile) -->
-            <div class="section-box p-4 lg:col-span-2 space-y-4">
-                <h3 id="action-header" class="text-2xl font-bold text-accent-color border-b border-gray-600 pb-2">Actions</h3>
-                <div id="action-buttons" class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <!-- Action/Combat Buttons Render Here -->
-                </div>
-                <button id="pass-turn-btn" class="action-btn w-full hidden">Pass Turn</button>
+        <!-- COMBAT LOG -->
+        <div class="section-box p-4 h-64 overflow-y-auto flex flex-col-reverse">
+            <h3 class="text-xl font-bold border-b border-gray-600 pb-2 mb-2 text-white">Event Log</h3>
+            <div id="combat-log" class="space-y-1">
+                <!-- Combat/Dungeon Log Entries Here -->
             </div>
         </div>
+
+        <!-- ACTIONS / DUNGEON INTERACTION -->
+        <div class="section-box p-4 space-y-4">
+            <h3 id="action-header" class="text-2xl font-bold text-accent-color border-b border-gray-600 pb-2">Actions</h3>
+            <div id="action-buttons" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <!-- Action/Combat Buttons Render Here -->
+            </div>
+            <button id="pass-turn-btn" class="action-btn w-full hidden">Pass Turn</button>
+        </div>
         
-        <!-- INVENTORY AND ABILITIES -->
+        <!-- INVENTORY AND ABILITIES (KEPT AS SIMPLE STACKED BLOCKS) -->
         <div id="inventory-display" class="section-box p-4 flex flex-col md:flex-row gap-6 mt-6">
             <div class="w-full md:w-1/2">
                 <h4 class="text-xl font-semibold border-b border-gray-600 pb-2 mb-2 text-accent-color">Inventory</h4>
@@ -262,7 +257,7 @@ const ENEMY_TEMPLATES = {
     }
 };
 
-// ITEM TEMPLATES
+// ITEM TEMPLATES (No longer used, but kept for future reference)
 const ITEM_TEMPLATES = {
     'healing_potion': { 
         id: 'healing_potion', 
@@ -270,36 +265,21 @@ const ITEM_TEMPLATES = {
         type: 'Consumable', 
         description: 'Restores 25 HP.', 
         effect: { type: 'Heal', value: 25 } 
-    },
-    'speed_gem': { 
-        id: 'speed_gem', 
-        name: 'Speed Gem', 
-        type: 'Accessory', 
-        description: 'Grants +1 Speed (Permanent).', 
-        effect: { type: 'StatBoost', stat: 'speed', value: 1 } 
-    },
-    'minor_shield': {
-        id: 'minor_shield',
-        name: 'Minor Shield',
-        type: 'Equipment',
-        description: 'Grants +1 Defense (Permanent).',
-        effect: { type: 'StatBoost', stat: 'defense', value: 1 }
     }
 };
 
-// AREA DATA (Dungeon Definitions)
+// AREA DATA (Dungeon Definitions) - MODIFIED: Only Empty rooms for testing
 const AREA_DATA = {
     'erebos': {
         name: 'Erebos',
         totalRooms: 6, // 5 regular rooms + 1 boss room
         bossRoomIndex: 5,
-        roomTypes: ['Combat', 'Loot', 'Lore'],
+        roomTypes: ['Empty'], // <--- TEMPORARY: FORCING ALL NON-BOSS ROOMS TO BE EMPTY
         enemyPool: ['goblin', 'skeleton'],
         bossId: 'goblin_king', // Placeholder boss ID
         roomDescriptions: {
             'Combat': 'The air is thick with tension. A hideous creature blocks your path!',
-            'Loot': 'You stumble upon a small, dusty alcove. Something glints in the corner.',
-            'Lore': 'Ancient runes cover the walls. You sense knowledge is near...',
+            'Empty': 'The room is silent and empty, offering a moment of quiet reflection.',
             'Boss': 'The chamber opens into a vast cavern. The mighty Boss awaits!'
         }
     }
@@ -362,7 +342,6 @@ const CHARACTERS = [
 ];
 
 // --- DOM REFERENCES ---
-const body = document.body;
 const menuScreen = document.getElementById('menu-screen');
 const gameContainer = document.getElementById('game-container');
 const charSelectScreen = document.getElementById('character-select-screen');
@@ -483,7 +462,7 @@ function log(message, className = '') {
 // --- THEME & SETTINGS LOGIC (Simplified) ---
 
 function applyTheme(themeName) {
-    // Currently only supporting default theme, but leaving mechanism for future expansion
+    // Currently only supporting default theme
     localStorage.setItem('gameTheme', 'default');
 }
 
@@ -685,12 +664,11 @@ const DungeonManager = {
     },
 
     /**
-     * Randomly picks a room type (Combat, Loot, Lore) and initializes it.
+     * Randomly picks a room type (Combat, Empty) and initializes it.
      */
     generateRandomRoom: (area) => {
         const roomTypes = area.roomTypes;
-        const randomIndex = Math.floor(Math.random() * roomTypes.length);
-        const roomType = roomTypes[randomIndex];
+        const roomType = roomTypes[0]; // Since roomTypes is currently only ['Empty'], this forces an Empty room.
         gameState.dungeonState.currentRoomType = roomType;
 
         dialogueText.textContent = area.roomDescriptions[roomType];
@@ -698,11 +676,9 @@ const DungeonManager = {
 
         if (roomType === 'Combat') {
             DungeonManager.startCombatEncounter(area);
-        } else if (roomType === 'Loot') {
-            DungeonManager.handleLootRoom();
-        } else if (roomType === 'Lore') {
-            DungeonManager.handleLoreRoom();
-        }
+        } else if (roomType === 'Empty') {
+            DungeonManager.handleEmptyRoom();
+        } 
     },
     
     /**
@@ -721,562 +697,15 @@ const DungeonManager = {
     },
 
     /**
-     * Generates a loot item for the player.
+     * Handles an empty room.
      */
-    handleLootRoom: () => {
-        const itemIds = Object.keys(ITEM_TEMPLATES);
-        const randomItemId = itemIds[Math.floor(Math.random() * itemIds.length)];
-        const item = ITEM_TEMPLATES[randomItemId];
-        
-        // Add item to inventory
-        const existingItem = gameState.dungeonState.inventory.find(i => i.id === item.id);
-        if (existingItem) {
-            existingItem.qty++;
-        } else {
-            gameState.dungeonState.inventory.push({ ...item, qty: 1 });
-        }
-        
-        log(`Found: ${item.name}! ${item.description}`, 'log-win');
-        dialogueText.textContent = `You found a sparkling treasure! (${item.name} added to inventory.)`;
-
+    handleEmptyRoom: () => {
+        log(`The room is safe, for now.`, 'log-special');
         // Advance button is necessary for non-combat rooms
-        DungeonManager.renderDungeonActions();
-    },
-
-    /**
-     * Provides a lore boost (e.g., small heal or temporary buff).
-     */
-    handleLoreRoom: () => {
-        const healAmount = 10;
-        gameState.player.baseStats.currentHP = Math.min(
-            gameState.player.baseStats.maxHP, 
-            gameState.player.baseStats.currentHP + healAmount
-        );
-        log(`The runes grant you knowledge, restoring ${healAmount} HP.`, 'log-special');
-        dialogueText.textContent = `The ancient script reveals secrets, giving you a renewed sense of strength.`;
-        
         DungeonManager.renderDungeonActions();
     },
 
     /**
      * Placeholder for Boss Room logic.
      */
-    generateBossRoom: (area) => {
-        gameState.dungeonState.currentRoomType = 'Boss';
-        dialogueText.textContent = area.roomDescriptions['Boss'];
-        log(`BOSS ROOM: ${area.bossId} awaits!`, 'log-loss');
-        
-        // For now, start combat with a super-powered Goblin
-        const bossTemplate = JSON.parse(JSON.stringify(ENEMY_TEMPLATES['goblin']));
-        bossTemplate.name = "The Goblin King";
-        bossTemplate.baseStats.maxHP = 150;
-        bossTemplate.baseStats.currentHP = 150;
-        bossTemplate.baseStats.defense = 4;
-        
-        gameState.enemy = createEntityFromTemplate(bossTemplate);
-        setView('combat');
-    },
-
-    /**
-     * Renders interaction buttons for non-combat rooms.
-     */
-    renderDungeonActions: () => {
-        actionButtonsDiv.innerHTML = '';
-        
-        const nextButton = document.createElement('button');
-        nextButton.textContent = 'Continue Deeper';
-        nextButton.classList.add('action-btn', 'w-full', 'col-span-full');
-        nextButton.onclick = () => DungeonManager.nextRoom();
-        actionButtonsDiv.appendChild(nextButton);
-    },
-    
-    /**
-     * Called when a combat encounter is won.
-     */
-    onCombatWin: () => {
-        gameState.enemy = null; // Clear enemy state
-        log(`You take a moment to recover.`, 'log-special');
-        
-        // Restore player to dungeon view and render next room button
-        setView('dungeon'); 
-        DungeonManager.renderDungeonActions();
-    }
-}
-
-
-// --- COMBAT CORE MECHANICS (RETAINED) ---
-
-/**
- * 1. Player selects an action. This stores the action and triggers the Enemy AI.
- */
-function executeAbility(ability) {
-    if (gameState.playerAction) return; 
-
-    // ZECTUS DYNAMIC ATTACK RESOLUTION
-    let resolvedAbility = ability;
-    if (ability.isZectusMainAttack) {
-        resolvedAbility = getZectusCurrentAbility(gameState.player.baseStats.tri_sword_state);
-        if (!resolvedAbility) {
-            resolvedAbility = gameState.player.abilities.find(a => a.name === 'Cycle');
-        }
-    }
-    
-    gameState.playerAction = resolvedAbility;
-    log(`${gameState.player.name} chooses ${resolvedAbility.name}...`, 'log-special');
-    
-    updateCombatUI();
-
-    selectEnemyAction();
-    
-    setTimeout(resolveCombatRound, 500);
-}
-
-/**
- * Helper function for Zectus: gets the actual ability stats based on weapon state
- */
-function getZectusCurrentAbility(state) {
-    const zectusData = CHARACTERS.find(c => c.id === 'zectus');
-    if (!zectusData) return null;
-    
-    const abilityName = `Tri-Sword: ${state}`;
-    return zectusData.abilities.find(a => a.name === abilityName);
-}
-
-
-/**
- * Enemy AI selects its action.
- */
-function selectEnemyAction() {
-    if (gameState.enemy.baseStats.effects.includes('Stagger')) {
-        gameState.enemyAction = { name: 'Staggered', type: 'NONE' };
-        log(`${gameState.enemy.name} is Staggered and cannot act!`, 'log-loss');
-        return;
-    }
-
-    const enemyAbilities = gameState.enemy.abilities;
-    const enemyAttack = enemyAbilities.find(a => a.type === 'ATTACK');
-    const enemyDefense = enemyAbilities.find(a => a.type === 'DEFENSE');
-
-    let chosenAbility;
-    if (enemyDefense && Math.random() < 0.5) {
-        chosenAbility = enemyDefense;
-    } else {
-        chosenAbility = enemyAttack;
-    }
-    
-    gameState.enemyAction = chosenAbility;
-    log(`${gameState.enemy.name} prepares to use ${chosenAbility.name}!`, 'log-special');
-}
-
-
-/**
- * 2. Main Turn Resolution: Determines action order and resolves conflict.
- */
-function resolveCombatRound() {
-    const playerAbility = gameState.playerAction;
-    const enemyAbility = gameState.enemyAction;
-
-    if (checkGameOver()) return;
-
-    // Check Player Stagger
-    if (gameState.player.baseStats.effects.includes('Stagger')) {
-        log(`${gameState.player.name} is Staggered and skips their action!`, 'log-loss');
-        
-        if (enemyAbility.type !== 'ATTACK' || enemyAbility.type === 'NONE') {
-            log(`...continuing to cleanup.`, 'log-special');
-            setTimeout(endTurnCleanup, 1000);
-            return;
-        } 
-        
-        log(`${gameState.enemy.name} attacks while ${gameState.player.name} is Staggered!`, 'log-win');
-        executeSingleAction(gameState.enemy, enemyAbility, gameState.player);
-        if (checkGameOver()) return;
-        setTimeout(endTurnCleanup, 1000);
-        return;
-    }
-
-
-    const pType = playerAbility ? playerAbility.type : 'NONE';
-    const eType = enemyAbility ? enemyAbility.type : 'NONE';
-    const pSpeed = gameState.player.baseStats.speed || 0;
-    const eSpeed = gameState.enemy.baseStats.speed || 0;
-    
-    log(`Player Speed: ${pSpeed}, Enemy Speed: ${eSpeed}.`, 'log-special');
-
-    // Case 1: Both ATTACK -> CLASH
-    if (pType === 'ATTACK' && eType === 'ATTACK') {
-        log(`Both attack! Initiating CLASH...`, 'log-special');
-        handleClash(playerAbility, enemyAbility);
-        
-        if (checkGameOver()) return; 
-    
-    // Case 2: Mixed Actions or Non-Attack vs Attack -> Speed determines priority
-    } else {
-        let first, second;
-        let firstAbility, secondAbility;
-
-        if (pSpeed > eSpeed) {
-            first = gameState.player;
-            firstAbility = playerAbility;
-            second = gameState.enemy;
-            secondAbility = enemyAbility;
-        } else if (eSpeed > pSpeed) {
-            first = gameState.enemy;
-            firstAbility = enemyAbility;
-            second = gameState.player;
-            secondAbility = playerAbility; 
-        } else {
-            // Speed Tie: Default to Player acting first 
-            first = gameState.player;
-            firstAbility = playerAbility;
-            second = gameState.enemy;
-            secondAbility = enemyAbility;
-            log(`Speed tie! ${first.name} acts first.`, 'log-special');
-        }
-
-        // --- Resolve First Action ---
-        log(`${first.name} (${firstAbility.name}) acts first.`, 'log-special');
-        executeSingleAction(first, firstAbility, second);
-        if (checkGameOver()) return;
-        
-        // --- Resolve Second Action ---
-        if (second.baseStats.currentHP > 0 && secondAbility.type !== 'NONE') {
-            if (second.baseStats.effects.includes('Stagger')) {
-                log(`${second.name} was **Staggered** and skips their action!`, 'log-loss');
-            } else {
-                log(`${second.name} (${secondAbility.name}) acts second.`, 'log-special');
-                executeSingleAction(second, secondAbility, first);
-            }
-        } else if (secondAbility.type === 'NONE') {
-            log(`${second.name} skips their turn.`, 'log-loss');
-        }
-        
-        if (checkGameOver()) return; 
-    }
-    
-    setTimeout(endTurnCleanup, 1000);
-}
-
-/**
- * Resolves a single action (Defense, Special, or Attack) outside of a clash.
- */
-function executeSingleAction(attacker, ability, target) {
-    if (target.baseStats.currentHP <= 0) return; 
-    if (!ability) return; 
-
-    // Zectus: resolve dynamic ability
-    if (attacker.id === 'zectus' && ability.isZectusMainAttack) {
-        ability = getZectusCurrentAbility(attacker.baseStats.tri_sword_state);
-        if (!ability) {
-             log(`CRITICAL: Zectus's current weapon state (${attacker.baseStats.tri_sword_state}) is invalid.`, 'log-loss');
-             return;
-        }
-    }
-
-    if (ability.type === 'DEFENSE') {
-        if (ability.defenseEffect === 'NegateNextHit') {
-            if (!Array.isArray(target.baseStats.effects)) { target.baseStats.effects = []; }
-            target.baseStats.effects.push('NegateNextHit');
-        }
-        log(`${attacker.name} successfully executes a defensive maneuver!`, 'log-win');
-        
-    } else if (ability.type === 'SPECIAL') {
-        // Balter's Grapple logic
-        if (ability.name === 'Grapple') {
-            const attackerRoll = rollDie(ability.dice || 10); 
-            const targetGrappleDie = target.baseStats.grapple_die || 8;
-            const targetRoll = rollDie(targetGrappleDie);
-            
-            if (attackerRoll > targetRoll) {
-                if (!Array.isArray(target.baseStats.effects)) { target.baseStats.effects = []; }
-                target.baseStats.effects.push('Grappled');
-                log(`${attacker.name} successfully grapples ${target.name}! ${target.name} auto-loses the next clash.`, 'log-win');
-            } else {
-                log(`${attacker.name} fails to grapple ${target.name}.`, 'log-loss');
-            }
-        }
-        
-    } else if (ability.type === 'SWITCH') {
-        // Zectus Cycle logic: deals 2 damage to TARGET on activation
-        let currentWeapon = attacker.baseStats.tri_sword_state;
-        const weapons = ['Scythe', 'Trident', 'Hammer'];
-        let currentIndex = weapons.indexOf(currentWeapon);
-        let nextIndex = (currentIndex + 1) % weapons.length;
-        
-        attacker.baseStats.tri_sword_state = weapons[nextIndex];
-        
-        const damage = ability.baseAttack || 2; 
-        target.baseStats.currentHP = Math.max(0, target.baseStats.currentHP - damage); 
-        log(`${attacker.name} cycles weapon to ${weapons[nextIndex]}. Deals ${damage} damage to ${target.name}!`, 'log-win');
-
-    } else if (ability.type === 'ATTACK') {
-        applyDamage(ability, attacker, target);
-        
-        if (ability.statusEffect === 'Stagger') {
-            if (!Array.isArray(target.baseStats.effects)) { target.baseStats.effects = []; }
-            target.baseStats.effects.push('Stagger');
-            log(`${target.name} is **Staggered** and will skip their next turn!`, 'log-loss');
-        }
-    }
-}
-
-
-/**
- * 3. The Core Clash Logic (When both characters attack)
- */
-function handleClash(pAbility, eAbility) {
-    try {
-        if (!pAbility || !eAbility) {
-            log(`CRITICAL: Missing Player or Enemy ability object in Clash.`, 'log-loss');
-            return; 
-        }
-
-        if (!Array.isArray(gameState.enemy.baseStats.effects)) { gameState.enemy.baseStats.effects = []; }
-        if (!Array.isArray(gameState.player.baseStats.effects)) { gameState.player.baseStats.effects = []; }
-
-        let resolvedPAbility = pAbility;
-        if (gameState.player.id === 'zectus' && pAbility.isZectusMainAttack) {
-            resolvedPAbility = getZectusCurrentAbility(gameState.player.baseStats.tri_sword_state);
-            if (!resolvedPAbility) {
-                 log(`CRITICAL: Zectus's current weapon state (${gameState.player.baseStats.tri_sword_state}) is invalid for clash.`, 'log-loss');
-                 return;
-            }
-        }
-
-        const isPiledriver = resolvedPAbility.name === 'Piledriver';
-        const basePlayerCoins = (typeof resolvedPAbility.coins === 'number') ? resolvedPAbility.coins : 0;
-        const baseEnemyCoins = (typeof eAbility.coins === 'number') ? eAbility.coins : 0;
-        const pDice = (typeof resolvedPAbility.dice === 'number' && resolvedPAbility.dice > 0) ? resolvedPAbility.dice : 1;
-        const eDice = (typeof eAbility.dice === 'number' && eAbility.dice > 0) ? eAbility.dice : 1;
-        
-        // Striker Passive: Coin Bonus
-        const strikerBonus = (gameState.player.id === 'striker' && gameState.player.baseStats.consecutive_rounds > 0) 
-            ? gameState.player.baseStats.consecutive_rounds 
-            : 0;
-
-        const pCoins = basePlayerCoins + strikerBonus;
-        const eCoins = baseEnemyCoins;
-
-        const playerRoll = rollDie(pDice);
-        const enemyRoll = rollDie(eDice);
-        const playerCoinBonus = rollCoins(pCoins); 
-        const enemyCoinBonus = rollCoins(eCoins); 
-
-        const playerClashValue = BASE_CLASH_VALUE + playerRoll + playerCoinBonus;
-        const enemyClashValue = BASE_CLASH_VALUE + enemyRoll + enemyCoinBonus;
-        
-        let winner, loser, winnerAbility, winnerCoinBonus, winnerDiceRoll;
-
-        // --- 5. DETERMINE WINNER ---
-        const isEnemyGrappled = gameState.enemy.baseStats.effects.includes('Grappled');
-
-        if (isEnemyGrappled && !isPiledriver && gameState.player.id === 'balter') { 
-            winner = gameState.player;
-            loser = gameState.enemy;
-            winnerAbility = resolvedPAbility;
-            winnerCoinBonus = playerCoinBonus;
-            winnerDiceRoll = playerRoll;
-            log(`${gameState.enemy.name} is Grappled and automatically loses the clash!`, 'log-loss');
-        } else if (playerClashValue >= enemyClashValue) {
-            winner = gameState.player;
-            loser = gameState.enemy;
-            winnerAbility = resolvedPAbility;
-            winnerCoinBonus = playerCoinBonus;
-            winnerDiceRoll = playerRoll;
-        } else {
-            winner = gameState.enemy;
-            loser = gameState.player;
-            winnerAbility = eAbility;
-            winnerCoinBonus = enemyCoinBonus; 
-            winnerDiceRoll = enemyRoll;       
-        }
-
-        log(`${winner.name} wins the clash!`, 'log-win');
-
-        // --- 6. APPLY DAMAGE ---
-        if (winnerAbility && typeof winnerAbility === 'object') {
-            applyDamage(winnerAbility, winner, loser, winnerCoinBonus, winnerDiceRoll); 
-        } else {
-            log(`Clash finished but winner ability was undefined or invalid. No damage applied.`, 'log-loss');
-        }
-
-        // 7. Balter's "The Old One, Two" Passive
-        if (winner.id === 'balter' && winner.uniquePassive.type === 'ClashWinBonus' && loser.baseStats.currentHP > 0) {
-            const bonusDamageRoll = rollDie(winner.uniquePassive.dice);
-            const bonusDamage = Math.max(0, bonusDamageRoll - loser.baseStats.defense); 
-            loser.baseStats.currentHP = Math.max(0, loser.baseStats.currentHP - bonusDamage);
-            log(`Balter follows up with "The Old One, Two" for an extra ${bonusDamage} damage! (d${winner.uniquePassive.dice} roll: ${bonusDamageRoll})`, 'log-win');
-        }
-        
-        // 8. Apply Stagger
-        if (winnerAbility.statusEffect === 'Stagger') {
-            if (!Array.isArray(loser.baseStats.effects)) { loser.baseStats.effects = []; }
-            loser.baseStats.effects.push('Stagger');
-            log(`${loser.name} is **Staggered** and will skip their next turn!`, 'log-loss');
-        }
-        
-    } catch (error) {
-        log(`CRITICAL CLASH ERROR: Clash resolution failed. Check console for details.`, 'log-loss');
-        console.error("Clash resolution failed:", error);
-    }
-}
-
-/**
- * 4. Damage Application (called by Clash or Single Action)
- */
-function applyDamage(ability, attacker, target, coinBonus = rollCoins(ability.coins), diceRoll = rollDie(ability.dice)) {
-    if (!Array.isArray(target.baseStats.effects)) { target.baseStats.effects = []; }
-
-    let damage = (ability.baseAttack || 0) + (coinBonus || 0) + (diceRoll || 0); // Added dice roll to base damage calculation
-    
-    let finalDamage = Math.max(0, damage - target.baseStats.defense);
-
-    const negateIndex = target.baseStats.effects.indexOf('NegateNextHit');
-    if (negateIndex !== -1) {
-        log(`${target.name} Phases, negating all incoming damage!`, 'log-win');
-        target.baseStats.effects.splice(negateIndex, 1); // Remove effect
-        finalDamage = 0;
-    }
-
-    target.baseStats.currentHP = Math.max(0, target.baseStats.currentHP - finalDamage);
-    log(`${attacker.name} hits for ${finalDamage} damage! (${ability.damageType})`, 'log-damage');
-    
-    if (target.id === 'shutenmaru') {
-        target.baseStats.lastDamageTaken = finalDamage; 
-    }
-    
-    if (attacker.id === 'shutenmaru' && attacker.uniquePassive.type === 'RollTrigger' && (diceRoll || 0) === attacker.uniquePassive.triggerValue) {
-        const healAmount = target.baseStats.lastDamageTaken; 
-        attacker.baseStats.currentHP = Math.min(attacker.baseStats.maxHP, attacker.baseStats.currentHP + healAmount);
-        log(`Chrono-Fist triggered! Shuten-Maru heals back ${healAmount} damage.`, 'log-win');
-    }
-
-    if (ability.name === 'Piledriver' && ability.removesTargetStatus === 'Grappled') {
-        target.baseStats.effects = target.baseStats.effects.filter(e => e !== 'Grappled');
-        log(`${target.name} is released from the grapple.`, 'log-special');
-    }
-}
-
-
-/**
- * 5. End of Turn Cleanup & Setup for Next Turn
- */
-function endTurnCleanup() {
-    // 1. Clear Stagger effect for both player and enemy
-    gameState.player.baseStats.effects = gameState.player.baseStats.effects.filter(e => e !== 'Stagger');
-    gameState.enemy.baseStats.effects = gameState.enemy.baseStats.effects.filter(e => e !== 'Stagger');
-    
-    // 2. Striker: Increase consecutive rounds
-    if (gameState.player.id === 'striker') {
-        gameState.player.baseStats.consecutive_rounds++;
-    }
-
-    if (checkGameOver()) return;
-
-    // 3. Reset actions for the next turn
-    gameState.playerAction = null;
-    gameState.enemyAction = null;
-    gameState.turn++;
-    
-    log(`--- Start of Turn ${gameState.turn} ---`, 'log-special');
-
-    // 4. Re-render UI
-    updateCombatUI();
-    renderCombatActions();
-}
-
-/**
- * Checks for a winner/loser and displays the game over screen or returns to dungeon.
- */
-function checkGameOver() {
-    updateCombatUI(); 
-    
-    if (gameState.player.baseStats.currentHP <= 0) {
-        gameState.player.baseStats.status = 'Defeated';
-        log(`${gameState.player.name} has been defeated. Game Over.`, 'log-loss');
-        dialogueText.textContent = "You have been vanquished.";
-        actionButtonsDiv.innerHTML = '<button onclick="location.reload()" class="action-btn w-full">Return to Menu</button>';
-        return true;
-    } else if (gameState.enemy && gameState.enemy.baseStats.currentHP <= 0) {
-        gameState.enemy.baseStats.status = 'Defeated';
-        log(`${gameState.enemy.name} is vanquished!`, 'log-win');
-        dialogueText.textContent = "The enemy is defeated. Time to explore the room's findings...";
-        
-        // Return to dungeon exploration view
-        DungeonManager.onCombatWin();
-        return true;
-    }
-    return false;
-}
-
-
-/**
- * 6. Action Rendering (dynamically creates buttons)
- */
-function renderCombatActions() {
-    actionButtonsDiv.innerHTML = '';
-    
-    if (gameState.currentView !== 'combat') {
-        return DungeonManager.renderDungeonActions();
-    }
-    
-    const playerAbilities = gameState.player.abilities;
-    const isEnemyGrappled = gameState.enemy.baseStats.effects.includes('Grappled'); 
-    const currentWeapon = gameState.player.baseStats.tri_sword_state; 
-    
-    const renderableAbilities = playerAbilities.filter(ability => !ability.isHidden);
-
-    renderableAbilities.forEach(ability => {
-        const btn = document.createElement('button');
-        btn.classList.add('combat-btn');
-        let displayName = ability.name;
-
-        if (ability.name === 'Piledriver') {
-            btn.disabled = !isEnemyGrappled || gameState.playerAction !== null;
-            if (isEnemyGrappled) {
-                btn.classList.add('combo-ready');
-            } else {
-                btn.classList.remove('combo-ready');
-            }
-        }
-        
-        if (gameState.player.id === 'zectus' && ability.isZectusMainAttack) {
-            displayName = `Tri-Sword: ${currentWeapon}`;
-            btn.classList.add('active-weapon-btn'); 
-        }
-
-        // Disable all buttons if action already chosen
-        if (gameState.playerAction !== null) {
-            btn.disabled = true;
-        }
-
-        btn.textContent = displayName;
-        btn.onclick = () => executeAbility(ability);
-        actionButtonsDiv.appendChild(btn);
-    });
-}
-
-
-// --- INITIALIZATION ---
-
-function init() {
-    // Since themes were disabled, enforce default theme
-    applyTheme('default'); 
-
-    setView('menu'); 
-
-    newGameBtn.addEventListener('click', () => setView('select'));
-
-    openSettingsBtn.addEventListener('click', toggleSettingsPanel);
-    closeSettingsBtn.addEventListener('click', toggleSettingsPanel);
-    
-    // Theme selection logic (currently disabled for simplicity)
-    themeOptionBtns.forEach(btn => {
-        btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
-    });
-}
-
-window.onload = init;
-    </script>
-</body>
-</html>
+    generateBossRoom: (area
