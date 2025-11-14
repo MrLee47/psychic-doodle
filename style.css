@@ -1,7 +1,7 @@
 body {
-    font-family: monospace; /* Classic retro font */
-    background-color: #1a1a1a;
-    color: #00ff41; /* Green text for a "terminal" look */
+    font-family: 'Georgia', serif; /* More classic fantasy font */
+    background: linear-gradient(to bottom right, #e0e7e9, #c7d2d6); /* Soft, light background */
+    color: #333; /* Darker text for contrast */
     margin: 0;
     display: flex;
     justify-content: center;
@@ -18,22 +18,52 @@ body {
 /* --- Menu Styling --- */
 #menu-screen {
     text-align: center;
-    padding: 30px;
-    border: 3px solid #00ff41;
-    box-shadow: 0 0 20px #00ff41;
-    width: 80%;
-    max-width: 500px;
+    padding: 40px;
+    background-color: #f8f8f8; /* Light background for the menu box */
+    border: 2px solid #a8a8a8; /* Softer border */
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); /* Soft shadow */
+    width: 85%;
+    max-width: 600px;
+    position: relative; /* Needed for optional background elements */
+}
+
+#menu-screen::before { /* Faint "parchment" texture effect */
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMCAwSDIwMFYyMDBIMCIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0wIDBjMjAgMjAgMjAgNjAgMCA2MCIsIHN0cm9rZT0iI0QwREUzIiBzdHJva2Utd2lkdGg9IjEuNSIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iLjMiLz48cGF0aCBkPSJNMjAwIDBjLTIwIDIwLTIwIDYwIDAgNjAiIHN0cm9rZT0iI0QwREUzIiBzdHJva2Utd2lkdGg9IjEuNSIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iLjMiLz48cGF0aCBkPSJNMDYwYy0yMCAyMC0yMCA2MCAwIDYwIiBzdHJva2U9IiNEMERFMyIgc3Ryb2tlLXdpZHRoPSIxLjUiIGZpbGw9Im5vbmUiIG9wYWNpdHk9Ii4zIi8+PC9zdmc+');
+    background-repeat: repeat;
+    opacity: 0.1; /* Subtle effect */
+    pointer-events: none; /* Allows clicks to pass through */
+    border-radius: 10px;
+}
+
+
+#logo {
+    max-width: 200px; /* Adjust as needed */
+    height: auto;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
 }
 
 #menu-screen h1 {
-    font-size: 3em;
-    letter-spacing: 5px;
+    font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif; /* More grand font */
+    font-size: 3.5em;
+    letter-spacing: 2px;
+    color: #4a2d1e; /* Darker, earthy tone */
     margin-bottom: 5px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 }
 
 #menu-screen p {
     margin-top: 0;
     font-style: italic;
+    color: #666;
 }
 
 .menu-options {
@@ -41,51 +71,23 @@ body {
 }
 
 button {
-    background-color: #008f2e; /* Darker green background */
-    color: #1a1a1a;
-    border: 1px solid #00ff41;
-    padding: 10px 20px;
+    background-color: #8c735d; /* Earthy button color */
+    color: #fff;
+    border: none; /* No border for a softer look */
+    border-radius: 5px; /* Rounded buttons */
+    padding: 12px 25px;
     margin: 10px;
-    font-family: monospace;
-    font-size: 1.1em;
+    font-family: 'Georgia', serif;
+    font-size: 1.2em;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, transform 0.1s; /* Add transform for a subtle click effect */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 button:hover {
-    background-color: #00ff41;
-    color: #1a1a1a;
+    background-color: #b1937e; /* Lighter on hover */
+    transform: translateY(-2px); /* Slight lift effect */
 }
 
-.footer-text {
-    font-size: 0.8em;
-    color: #008f2e;
-}
-
-/* --- Game Container Styling (Basic) --- */
-#game-container {
-    width: 90%;
-    height: 90vh;
-    display: flex;
-    flex-direction: column;
-    border: 3px solid #00ff41;
-}
-
-#main-area {
-    display: flex;
-    flex-grow: 1;
-}
-
-#visual-novel-area {
-    flex: 2; /* Takes up 2/3 of the space */
-    padding: 20px;
-    border-right: 1px dashed #008f2e;
-}
-
-#action-box {
-    flex: 1; /* Takes up 1/3 of the space */
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
+button:active {
+    transform
