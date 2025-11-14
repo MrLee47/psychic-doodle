@@ -3,80 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chronicles of Heroes</title>
-    <link rel="stylesheet" href="style.css"> 
+    <title>Chronicles of Heroes: Clash</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Optional: Prevents FOUC (Flash of Unstyled Content) */
+        .hidden { display: none !important; }
+    </style>
 </head>
-<body class="theme-default">
+<body class="default-theme">
 
-    <!-- THE GAME CONTAINER -->
+    <!-- The Game Container (Hidden until start) -->
     <div id="game-container" class="hidden">
         
         <header id="status-bar">
-            <!-- 1. Health Bar Component -->
-            <div id="health-component" class="status-section">
-                <span class="label">HP:</span>
+            <!-- Player Status -->
+            <div id="player-status" class="combat-status-box">
+                <span id="player-name">Hero</span>
                 <div class="health-bar-container">
-                    <div id="health-bar-fill" class="health-bar-fill" style="width: 100%;"></div>
+                    <div id="player-hp-bar" class="health-bar" style="width: 100%;"></div>
                 </div>
-                <span id="health-value">100/100</span>
+                <span id="player-hp-text">100/100</span>
+                | Status: <span id="player-status-text">Alive</span>
             </div>
 
-            <!-- 2. Status Component -->
-            <div id="status-component" class="status-section">
-                <span class="label">Status:</span>
-                <span id="current-status">Alive</span>
+            <!-- Enemy Status -->
+            <div id="enemy-status" class="combat-status-box">
+                <span id="enemy-name">Enemy</span>
+                <div class="health-bar-container">
+                    <div id="enemy-hp-bar" class="health-bar" style="width: 100%;"></div>
+                </div>
+                <span id="enemy-hp-text">100/100</span>
+                | Status: <span id="enemy-status-text">Alive</span>
             </div>
-
-            <!-- Settings Button is now ONLY on the Menu Screen -->
-            <div class="spacer"></div>
         </header>
 
         <main id="main-area">
+            <!-- Visuals, map, or primary game text -->
             <div id="visual-novel-area">
-                <div id="character-portrait">
-                    <!-- Placeholder for character portraits -->
+                <p id="visual-text">A new opponent appears!</p>
+                <div id="combat-log">
+                    <!-- Combat log entries appear here -->
                 </div>
-                <p id="main-text">The journey begins...</p>
             </div>
 
+            <!-- Action buttons and dialogue -->
             <div id="action-box">
-                <p id="dialogue-text">Welcome to the game! Please select 'New Game' to begin or 'Load Game' if you have saved progress.</p>
+                <p id="dialogue-text">Select an action for your turn:</p>
                 <div id="action-buttons">
-                    <!-- Action buttons will be dynamically added here -->
+                    <!-- Ability buttons are dynamically inserted here -->
                 </div>
+                <button id="pass-turn-btn" class="combat-btn hidden">Pass Turn</button>
             </div>
         </main>
     </div>
 
-    <!-- THE MENU SCREEN (Initial view) -->
+    <!-- Menu Screen (Initial View) -->
     <div id="menu-screen">
-        <img id="logo" src="https://placehold.co/200x100/4a2d1e/ffffff?text=LOGO" alt="Game Logo"> 
+        <img id="logo" src="https://via.placeholder.com/200x100?text=Your+Logo" alt="Game Logo">
         <h1>CHRONICLES OF HEROES</h1>
         <p>A D&D Inspired Adventure</p>
         
         <div class="menu-options">
             <button id="new-game-btn">New Game</button>
             <button id="load-game-btn">Load Game</button>
-            
-            <!-- NEW SETTINGS BUTTON LOCATION -->
-            <button id="settings-btn" class="settings-menu-button">Settings ⚙️</button>
+            <button id="open-settings-menu-btn" class="settings-button">Settings</button>
         </div>
-
         <p class="footer-text">Built for friends & epic tales</p>
     </div>
 
-    <!-- THE SETTINGS PANEL (Slides in from top-right, hidden by default) -->
+    <!-- CHARACTER SELECTION SCREEN (Hidden by default) -->
+    <div id="character-select-screen" class="hidden">
+        <h2>Choose Your Champion</h2>
+        <div id="character-list">
+            <!-- Character cards will be inserted here -->
+        </div>
+        <button id="start-combat-btn" class="hidden">Begin Battle</button>
+    </div>
+
+    <!-- THE SETTINGS SLIDE-OUT PANEL (Hidden by default) -->
     <div id="settings-panel" class="settings-panel hidden">
-        <div class="panel-content">
-            <h2>Settings</h2>
-            <div class="theme-selector">
-                <h3>Select Theme:</h3>
-                <button class="theme-option-btn" data-theme="default">Default (Cream/Fantasy)</button>
-                <button class="theme-option-btn" data-theme="retro">Retro (Black/Green)</button>
-                <button class="theme-option-btn" data-theme="dark">Dark (Black/Gray)</button>
-                <button class="theme-option-btn" data-theme="light">Light (White/Blue)</button>
-            </div>
-            <button id="close-panel-btn">Close</button>
+        <button id="close-settings-btn" class="close-btn">X</button>
+        <h2>Settings</h2>
+        <div class="theme-selector">
+            <h3>Select Theme:</h3>
+            <button class="theme-option-btn" data-theme="default">Default (Cream)</button>
+            <button class="theme-option-btn" data-theme="retro">Retro (Green)</button>
+            <button class="theme-option-btn" data-theme="dark">Dark (Gray)</button>
+            <button class="theme-option-btn" data-theme="light">Light (Blue)</button>
         </div>
     </div>
 
