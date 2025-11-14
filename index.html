@@ -7,11 +7,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        /* Reverted to high-contrast, simple style for clarity */
         :root {
-            --primary-bg: #1f2937; /* Dark Gray */
-            --secondary-bg: #374151; /* Medium Gray */
+            --primary-bg: #111827; /* Deep Blue/Black */
+            --section-bg: #1f2937; /* Dark Gray */
             --text-color: #f3f4f6; /* Light Gray */
-            --accent-color: #f59e0b; /* Amber */
+            --accent-color: #f59e0b; /* Amber/Action */
             --hp-color: #ef4444; /* Red */
             --mp-color: #3b82f6; /* Blue */
             --log-special: #a7f3d0; /* Green highlight */
@@ -19,61 +20,44 @@
             --log-loss: #f87171; /* Light Red */
             --log-damage: #fcd34d; /* Yellow */
         }
-        /* Default Theme (Dark) */
-        .default-theme {
+        
+        body {
             background-color: var(--primary-bg);
             color: var(--text-color);
             font-family: 'Inter', sans-serif;
         }
-        /* Theme Overrides */
-        .retro-theme {
-            --primary-bg: #2e283a;
-            --secondary-bg: #574f67;
-            --text-color: #e0d5ec;
-            --accent-color: #c988e0;
-            --hp-color: #eb6555;
-            --mp-color: #8c9eff;
-            background-color: var(--primary-bg);
-        }
-        .light-theme {
-            --primary-bg: #f3f4f6;
-            --secondary-bg: #e5e7eb;
-            --text-color: #1f2937;
-            --accent-color: #10b981;
-            --hp-color: #dc2626;
-            --mp-color: #1d4ed8;
-            background-color: var(--primary-bg);
-            color: var(--text-color);
+
+        .section-box {
+            background-color: var(--section-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            border: 1px solid #374151;
         }
 
-        .container-card {
-            background-color: var(--secondary-bg);
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
         .hp-bar-inner {
             transition: width 0.5s ease-out;
             background-color: var(--hp-color);
             border-radius: 9999px;
             height: 100%;
         }
+        
         .log-entry {
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             padding: 4px 0;
             margin: 0;
             font-size: 0.85rem;
-            color: var(--text-color);
         }
         .log-special { color: var(--log-special); }
         .log-win { color: var(--log-win); font-weight: bold; }
         .log-loss { color: var(--log-loss); font-weight: bold; }
         .log-damage { color: var(--log-damage); }
+        
         .combat-btn, .action-btn {
             background-color: var(--accent-color);
             color: var(--primary-bg);
             font-weight: bold;
             padding: 10px 15px;
-            border-radius: 8px;
+            border-radius: 6px;
             transition: all 0.1s;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
@@ -87,8 +71,10 @@
             cursor: not-allowed;
             box-shadow: none;
         }
+        
+        /* Character Select Screen Styles (Retained) */
         .char-card {
-            border: 2px solid var(--secondary-bg);
+            border: 2px solid var(--section-bg);
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -97,7 +83,7 @@
         }
         .char-card.selected {
             border-color: var(--hp-color);
-            box-shadow: 0 0 10px var(--hp-color);
+            box-shadow: 0 0 8px var(--hp-color);
         }
         .combo-ready {
             background-color: var(--hp-color);
@@ -105,22 +91,23 @@
         }
         .active-weapon-btn {
             border: 3px solid var(--hp-color) !important;
-            box-shadow: 0 0 10px var(--hp-color) !important;
+            box-shadow: 0 0 8px var(--hp-color) !important;
         }
     </style>
 </head>
-<body class="default-theme min-h-screen p-4 flex flex-col items-center">
+<body class="min-h-screen p-4 flex flex-col items-center">
 
     <!-- SETTINGS PANEL (Hidden by default) -->
     <div id="settings-panel" class="fixed inset-0 z-50 bg-gray-900 bg-opacity-75 backdrop-blur-sm hidden justify-center items-center">
-        <div class="container-card w-11/12 md:w-1/3 p-6 space-y-4">
+        <div class="section-box w-11/12 md:w-1/3 p-6 space-y-4">
             <h2 class="text-2xl font-bold">Settings</h2>
             <div class="space-y-2">
                 <p class="font-semibold">Theme Selection:</p>
+                <!-- Retaining theme buttons but linking them to a single theme for consistency -->
                 <div class="flex space-x-2">
-                    <button data-theme="default" class="theme-option-btn action-btn px-3 py-1 text-sm">Default (Dark)</button>
-                    <button data-theme="retro" class="theme-option-btn action-btn px-3 py-1 text-sm">Retro</button>
-                    <button data-theme="light" class="theme-option-btn action-btn px-3 py-1 text-sm">Light</button>
+                    <button data-theme="default" class="theme-option-btn action-btn px-3 py-1 text-sm">Default</button>
+                    <button data-theme="retro" class="theme-option-btn action-btn px-3 py-1 text-sm" disabled>Retro (WIP)</button>
+                    <button data-theme="light" class="theme-option-btn action-btn px-3 py-1 text-sm" disabled>Light (WIP)</button>
                 </div>
             </div>
             <button id="close-settings-btn" class="action-btn w-full">Close</button>
@@ -128,7 +115,7 @@
     </div>
 
     <!-- MAIN MENU SCREEN -->
-    <div id="menu-screen" class="flex flex-col items-center justify-center space-y-6 hidden">
+    <div id="menu-screen" class="flex flex-col items-center justify-center space-y-6 hidden min-h-screen">
         <h1 class="text-5xl font-bold mb-8 text-accent-color">Chronicles of Heroes</h1>
         <button id="new-game-btn" class="action-btn w-64">New Game</button>
         <button id="load-game-btn" class="action-btn w-64" disabled>Load Game (WIP)</button>
@@ -137,7 +124,7 @@
 
     <!-- CHARACTER SELECT SCREEN -->
     <div id="character-select-screen" class="hidden w-full max-w-4xl">
-        <h2 class="text-3xl font-bold mb-6 text-center">Select Your Hero</h2>
+        <h2 class="text-3xl font-bold mb-6 text-center text-accent-color">Select Your Hero</h2>
         <div id="character-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <!-- Character Cards Render Here -->
         </div>
@@ -149,75 +136,75 @@
     <!-- MAIN GAME CONTAINER (Combat & Dungeon Views) -->
     <div id="game-container" class="hidden w-full max-w-5xl space-y-6">
 
-        <!-- STATUS BARS & HEADER -->
-        <div id="status-bars" class="grid grid-cols-2 gap-4">
+        <!-- STATUS BARS & HEADER (Simplified Full-Width Layout) -->
+        <div id="status-bars" class="space-y-4">
             <!-- Player Status -->
-            <div class="container-card p-4 space-y-2">
-                <h3 id="player-name" class="text-xl font-bold">Player Name</h3>
-                <div class="h-6 bg-gray-600 rounded-full">
+            <div id="player-status-card" class="section-box p-4 space-y-2">
+                <h3 id="player-name" class="text-xl font-bold text-accent-color">Player Name</h3>
+                <div class="h-5 bg-gray-600 rounded-full">
                     <div id="player-hp-bar" class="hp-bar-inner" style="width: 100%;"></div>
                 </div>
                 <div class="flex justify-between text-sm">
                     <span id="player-hp-text">100/100</span>
-                    <span id="player-status-text" class="text-accent-color">Alive</span>
+                    <span id="player-status-text" class="text-white">Alive</span>
                 </div>
             </div>
-            <!-- Enemy Status -->
-            <div class="container-card p-4 space-y-2">
-                <h3 id="enemy-name" class="text-xl font-bold text-right">Enemy Name</h3>
-                <div class="h-6 bg-gray-600 rounded-full">
+            <!-- Enemy Status (Hidden when not in combat) -->
+            <div id="enemy-status-card" class="section-box p-4 space-y-2 hidden">
+                <h3 id="enemy-name" class="text-xl font-bold text-red-400 text-right">Enemy Name</h3>
+                <div class="h-5 bg-gray-600 rounded-full">
                     <div id="enemy-hp-bar" class="hp-bar-inner" style="width: 100%;"></div>
                 </div>
                 <div class="flex justify-between text-sm">
-                    <span id="enemy-status-text" class="text-accent-color">Alive</span>
+                    <span id="enemy-status-text" class="text-white">Alive</span>
                     <span id="enemy-hp-text">100/100</span>
                 </div>
             </div>
         </div>
 
         <!-- DIALOGUE & ROOM INFO -->
-        <div class="container-card p-4">
-            <div id="room-info" class="text-lg font-semibold mb-2 flex justify-between">
-                <span id="area-display">Area: Erebos</span>
-                <span id="room-progress-display">Room 1/6</span>
+        <div class="section-box p-4">
+            <div id="room-info" class="text-lg font-semibold mb-2 flex justify-between border-b border-gray-600 pb-2">
+                <span id="area-display" class="text-accent-color">Area: Erebos</span>
+                <span id="room-progress-display" class="text-gray-400">Room 1/6</span>
             </div>
-            <p id="dialogue-text" class="text-lg italic">Welcome to the adventure!</p>
+            <p id="dialogue-text" class="text-lg italic mt-2">Welcome to the adventure!</p>
         </div>
 
-        <!-- INVENTORY AND ABILITIES (Always visible in Dungeon View) -->
-        <div id="inventory-display" class="container-card p-4 flex flex-col md:flex-row gap-4">
+        <!-- LOG & ACTION SECTION (Log is now stacked above Actions) -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- RIGHT COLUMN: COMBAT LOG (Now first on mobile) -->
+            <div class="section-box p-4 lg:col-span-1 h-64 overflow-y-auto flex flex-col-reverse">
+                <h3 class="text-xl font-bold border-b border-gray-600 pb-2 mb-2 text-white">Event Log</h3>
+                <div id="combat-log" class="space-y-1">
+                    <!-- Combat/Dungeon Log Entries Here -->
+                </div>
+            </div>
+
+            <!-- LEFT COLUMN: COMBAT ACTIONS / DUNGEON INTERACTION (Now second on mobile) -->
+            <div class="section-box p-4 lg:col-span-2 space-y-4">
+                <h3 id="action-header" class="text-2xl font-bold text-accent-color border-b border-gray-600 pb-2">Actions</h3>
+                <div id="action-buttons" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <!-- Action/Combat Buttons Render Here -->
+                </div>
+                <button id="pass-turn-btn" class="action-btn w-full hidden">Pass Turn</button>
+            </div>
+        </div>
+        
+        <!-- INVENTORY AND ABILITIES -->
+        <div id="inventory-display" class="section-box p-4 flex flex-col md:flex-row gap-6 mt-6">
             <div class="w-full md:w-1/2">
-                <h4 class="text-lg font-semibold border-b border-gray-600 mb-2">Inventory</h4>
+                <h4 class="text-xl font-semibold border-b border-gray-600 pb-2 mb-2 text-accent-color">Inventory</h4>
                 <ul id="inventory-list" class="text-sm space-y-1">
                     <li class="text-gray-400">No items found yet.</li>
                 </ul>
             </div>
             <div class="w-full md:w-1/2">
-                <h4 class="text-lg font-semibold border-b border-gray-600 mb-2">Abilities</h4>
+                <h4 class="text-xl font-semibold border-b border-gray-600 pb-2 mb-2 text-accent-color">Abilities</h4>
                 <ul id="ability-list" class="text-sm space-y-1">
                     <!-- Base abilities load here, new ones get added -->
                 </ul>
-            </div>
-        </div>
-
-
-        <!-- ACTION/COMBAT/DUNGEON SCREEN -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            <!-- LEFT COLUMN: COMBAT ACTIONS / DUNGEON INTERACTION -->
-            <div class="container-card p-4 md:col-span-2 space-y-4">
-                <h3 id="action-header" class="text-2xl font-bold text-accent-color">Actions</h3>
-                <div id="action-buttons" class="grid grid-cols-2 gap-4">
-                    <!-- Action/Combat Buttons Render Here -->
-                </div>
-                <button id="pass-turn-btn" class="action-btn w-full hidden">Pass Turn</button>
-            </div>
-
-            <!-- RIGHT COLUMN: COMBAT LOG -->
-            <div class="container-card p-4 md:col-span-1 h-96 overflow-y-auto flex flex-col-reverse">
-                <div id="combat-log" class="space-y-1">
-                    <!-- Combat/Dungeon Log Entries Here -->
-                </div>
             </div>
         </div>
 
@@ -228,12 +215,6 @@
 /**
  * Chronicles of Heroes: Core Game and Combat Logic
  * Includes: Theme Switching, Character Selection, Combat, and Dungeon Management.
- * * UPDATES:
- * - Full structural refactor to support a Dungeon/Area progression.
- * - Added ENEMY_TEMPLATES, ITEM_TEMPLATES, and AREA_DATA.
- * - Added a 'dungeon' view for exploration.
- * - Dungeon management logic for random room generation (Combat, Loot, Lore) and boss progression.
- * - Combat now returns to the dungeon upon victory.
  */
 
 // --- GLOBAL GAME STATE (Local Storage is used for persistence) ---
@@ -242,7 +223,6 @@ let gameState = {
     currentView: 'menu', // menu, select, dungeon, combat
     player: null,
     enemy: null, // Only populated during 'combat' view
-    currentTheme: 'default',
     turn: 1,
     playerAction: null, 
     enemyAction: null,
@@ -252,8 +232,8 @@ let gameState = {
         roomsCleared: 0,
         roomsUntilBoss: 5,
         currentRoomType: null,
-        inventory: [], // [{id: 'item_id', qty: 1, name: '...'}]
-        unlockedAbilities: [], // Abilities gained mid-dungeon
+        inventory: [], 
+        unlockedAbilities: [],
     }
 };
 
@@ -263,7 +243,6 @@ const BASE_CLASH_VALUE = 5;
 
 // ENEMY TEMPLATES
 const ENEMY_TEMPLATES = {
-    // Current Goblin is fine, maybe add one more
     'goblin': {
         id: 'goblin',
         name: 'Gravel-Claw Goblin',
@@ -410,6 +389,8 @@ const roomProgressDisplay = document.getElementById('room-progress-display');
 const inventoryList = document.getElementById('inventory-list');
 const abilityList = document.getElementById('ability-list');
 
+const enemyStatusCard = document.getElementById('enemy-status-card');
+
 // Status Bar References (Dynamic)
 const playerStatus = {
     name: document.getElementById('player-name'),
@@ -499,14 +480,11 @@ function log(message, className = '') {
 }
 
 
-// --- THEME & SETTINGS LOGIC ---
+// --- THEME & SETTINGS LOGIC (Simplified) ---
 
 function applyTheme(themeName) {
-    body.classList.remove('default-theme', 'retro-theme', 'dark-theme', 'light-theme');
-    const className = `${themeName}-theme`;
-    body.classList.add(className);
-    localStorage.setItem('gameTheme', themeName);
-    gameState.currentTheme = themeName;
+    // Currently only supporting default theme, but leaving mechanism for future expansion
+    localStorage.setItem('gameTheme', 'default');
 }
 
 function toggleSettingsPanel() {
@@ -522,9 +500,8 @@ function setView(viewName) {
     gameContainer.classList.add('hidden');
     charSelectScreen.classList.add('hidden');
     
-    // Hide combat-specific UI by default
-    document.getElementById('enemy-name').parentElement.classList.add('hidden');
-    document.getElementById('player-name').parentElement.classList.remove('col-span-2');
+    // Manage Status Bar Visibility
+    enemyStatusCard.classList.add('hidden');
     actionHeader.textContent = 'Actions';
 
     if (viewName === 'menu') {
@@ -535,12 +512,10 @@ function setView(viewName) {
     } else if (viewName === 'dungeon') {
         gameContainer.classList.remove('hidden');
         DungeonManager.renderDungeonActions();
-        updateCombatUI(); // Updates player status bars
+        updateCombatUI(); 
     } else if (viewName === 'combat') {
         gameContainer.classList.remove('hidden');
-        // Show enemy status bar in combat
-        document.getElementById('enemy-name').parentElement.classList.remove('hidden');
-        document.getElementById('player-name').parentElement.classList.add('col-span-2');
+        enemyStatusCard.classList.remove('hidden');
         actionHeader.textContent = 'Combat Actions';
         renderCombatActions();
         updateCombatUI();
@@ -557,7 +532,7 @@ function renderCharacterSelection() {
 
     CHARACTERS.forEach(char => {
         const card = document.createElement('div');
-        card.classList.add('char-card', 'p-4', 'rounded-lg', 'space-y-1');
+        card.classList.add('char-card', 'section-box', 'p-4', 'rounded-lg', 'space-y-1');
         card.dataset.id = char.id;
         card.innerHTML = `
             <h4 class="text-xl font-bold text-accent-color">${char.name}</h4>
@@ -587,7 +562,7 @@ function renderCharacterSelection() {
 function startNewGame(charId) {
     const selectedCharData = CHARACTERS.find(c => c.id === charId);
     
-    // 1. Initialize Player: Deep copy and merge character data
+    // 1. Initialize Player
     gameState.player = createEntityFromTemplate(selectedCharData);
     
     // 2. Initialize Dungeon State
@@ -595,7 +570,7 @@ function startNewGame(charId) {
         currentAreaId: 'erebos',
         currentRoomIndex: 0,
         roomsCleared: 0,
-        roomsUntilBoss: AREA_DATA['erebos'].totalRooms - 1, // 5 regular rooms
+        roomsUntilBoss: AREA_DATA['erebos'].totalRooms - 1, 
         currentRoomType: null,
         inventory: [],
         unlockedAbilities: [],
@@ -625,8 +600,9 @@ function updateCombatUI() {
     if (gameState.enemy) {
         updateHealthDisplay(gameState.enemy, enemyStatus);
         enemyStatus.name.textContent = gameState.enemy.name;
+        enemyStatusCard.classList.remove('hidden');
     } else {
-        enemyStatus.name.textContent = '---';
+        enemyStatusCard.classList.add('hidden');
     }
     
     // Dungeon progress update
@@ -692,7 +668,7 @@ const DungeonManager = {
         // Check for game end
         if (ds.roomsCleared >= area.totalRooms) {
             dialogueText.textContent = `You have cleared ${area.name}! Victory!`;
-            actionButtonsDiv.innerHTML = '<button onclick="location.reload()" class="action-btn">Start New Game</button>';
+            actionButtonsDiv.innerHTML = '<button onclick="location.reload()" class="action-btn w-full">Start New Game</button>';
             setView('dungeon');
             return;
         }
@@ -809,7 +785,7 @@ const DungeonManager = {
         
         const nextButton = document.createElement('button');
         nextButton.textContent = 'Continue Deeper';
-        nextButton.classList.add('action-btn', 'w-full');
+        nextButton.classList.add('action-btn', 'w-full', 'col-span-full');
         nextButton.onclick = () => DungeonManager.nextRoom();
         actionButtonsDiv.appendChild(nextButton);
     },
@@ -1219,7 +1195,7 @@ function checkGameOver() {
         gameState.player.baseStats.status = 'Defeated';
         log(`${gameState.player.name} has been defeated. Game Over.`, 'log-loss');
         dialogueText.textContent = "You have been vanquished.";
-        actionButtonsDiv.innerHTML = '<button onclick="location.reload()" class="action-btn">Return to Menu</button>';
+        actionButtonsDiv.innerHTML = '<button onclick="location.reload()" class="action-btn w-full">Return to Menu</button>';
         return true;
     } else if (gameState.enemy && gameState.enemy.baseStats.currentHP <= 0) {
         gameState.enemy.baseStats.status = 'Defeated';
@@ -1284,8 +1260,8 @@ function renderCombatActions() {
 // --- INITIALIZATION ---
 
 function init() {
-    const savedTheme = localStorage.getItem('gameTheme') || 'default';
-    applyTheme(savedTheme);
+    // Since themes were disabled, enforce default theme
+    applyTheme('default'); 
 
     setView('menu'); 
 
@@ -1293,6 +1269,8 @@ function init() {
 
     openSettingsBtn.addEventListener('click', toggleSettingsPanel);
     closeSettingsBtn.addEventListener('click', toggleSettingsPanel);
+    
+    // Theme selection logic (currently disabled for simplicity)
     themeOptionBtns.forEach(btn => {
         btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
     });
