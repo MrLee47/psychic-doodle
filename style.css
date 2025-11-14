@@ -1,119 +1,276 @@
+/* -------------------------------------------------------------------
+   1. CSS Variables for Theming
+   ------------------------------------------------------------------- */
+
+:root {
+    /* DEFAULT (Cream/Black) */
+    --font-main: 'Georgia', serif;
+    --bg-primary: #f8f0e5; /* Cream background */
+    --bg-secondary: #fff;
+    --text-color: #1c1c1c; /* Black text */
+    --ui-color: #4a2d1e; /* Dark Earthy Brown */
+    --ui-accent: #a08c7d; /* Lighter Earthy Brown */
+    --health-color: #cf2a27; /* Red */
+    --health-bg-color: #e0e0e0;
+    --shadow-color: rgba(0, 0, 0, 0.2);
+}
+
+/* RETRO (Black/Green) */
+.theme-retro {
+    --font-main: monospace;
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #000;
+    --text-color: #00ff41;
+    --ui-color: #008f2e;
+    --ui-accent: #00ff41;
+    --health-color: #ff00ff; /* Retro contrast */
+    --health-bg-color: #444;
+    --shadow-color: rgba(0, 255, 65, 0.5);
+}
+
+/* DARK (Black/Gray) */
+.theme-dark {
+    --font-main: sans-serif;
+    --bg-primary: #2c2c2c;
+    --bg-secondary: #3c3c3c;
+    --text-color: #e0e0e0;
+    --ui-color: #7b7b7b;
+    --ui-accent: #a0a0a0;
+    --health-color: #4CAF50; /* Green */
+    --health-bg-color: #444;
+    --shadow-color: rgba(255, 255, 255, 0.1);
+}
+
+/* LIGHT (White/Blue) */
+.theme-light {
+    --font-main: 'Helvetica', sans-serif;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f0f8ff;
+    --text-color: #1a1a47; /* Dark blue text */
+    --ui-color: #1e90ff; /* Dodger blue */
+    --ui-accent: #6495ed; /* Cornflower blue */
+    --health-color: #d9534f; /* Red */
+    --health-bg-color: #e6e6e6;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+/* -------------------------------------------------------------------
+   2. Global and Menu Styles
+   ------------------------------------------------------------------- */
+
 body {
-    font-family: 'Georgia', serif; /* More classic fantasy font */
-    background: linear-gradient(to bottom right, #e0e7e9, #c7d2d6); /* Soft, light background */
-    color: #333; /* Darker text for contrast */
+    font-family: var(--font-main);
+    background-color: var(--bg-primary);
+    color: var(--text-color);
     margin: 0;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
     overflow: hidden;
+    transition: background-color 0.3s;
 }
 
-/* --- Utility Class --- */
 .hidden {
     display: none !important;
 }
 
-/* --- Menu Styling --- */
 #menu-screen {
     text-align: center;
     padding: 40px;
-    background-color: #f8f8f8; /* Light background for the menu box */
-    border: 2px solid #a8a8a8; /* Softer border */
-    border-radius: 10px; /* Rounded corners */
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); /* Soft shadow */
+    background-color: var(--bg-secondary);
+    border: 2px solid var(--ui-accent);
+    border-radius: 10px;
+    box-shadow: 0 5px 15px var(--shadow-color);
     width: 85%;
     max-width: 600px;
-    position: relative; /* Needed for optional background elements */
 }
-
-#menu-screen::before { /* Faint "parchment" texture effect */
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMCAwSDIwMFYyMDBIMCIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0wIDBjMjAgMjAgMjAgNjAgMCA2MCIsIHN0cm9rZT0iI0QwREUzIiBzdHJva2Utd2lkdGg9IjEuNSIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iLjMiLz48cGF0aCBkPSJNMjAwIDBjLTIwIDIwLTIwIDYwIDAgNjAiIHN0cm9rZT0iI0QwREUzIiBzdHJva2Utd2lkdGg9IjEuNSIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iLjMiLz48cGF0aCBkPSJNMDYwYy0yMCAyMC0yMCA2MCAwIDYwIiBzdHJva2U9IiNEMERFMyIgc3Ryb2tlLXdpZHRoPSIxLjUiIGZpbGw9Im5vbmUiIG9wYWNpdHk9Ii4zIi8+PC9zdmc+');
-    background-repeat: repeat;
-    opacity: 0.1; /* Subtle effect */
-    pointer-events: none; /* Allows clicks to pass through */
-    border-radius: 10px;
-}
-
 
 #logo {
-    max-width: 200px; /* Adjust as needed */
+    max-width: 200px;
     height: auto;
     margin-bottom: 20px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--ui-accent);
     border-radius: 5px;
 }
 
 #menu-screen h1 {
-    font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif; /* More grand font */
-    font-size: 3.5em;
+    font-size: 2.5em;
     letter-spacing: 2px;
-    color: #4a2d1e; /* Darker, earthy tone */
+    color: var(--ui-color);
     margin-bottom: 5px;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-}
-
-#menu-screen p {
-    margin-top: 0;
-    font-style: italic;
-    color: #666;
-}
-
-.menu-options {
-    margin: 30px 0;
 }
 
 button {
-    background-color: #8c735d; /* Earthy button color */
-    color: #fff;
-    border: none; /* No border for a softer look */
-    border-radius: 5px; /* Rounded buttons */
+    background-color: var(--ui-accent);
+    color: var(--bg-secondary);
+    border: none;
+    border-radius: 5px;
     padding: 12px 25px;
     margin: 10px;
-    font-family: 'Georgia', serif;
-    font-size: 1.2em;
+    font-family: var(--font-main);
+    font-size: 1.1em;
     cursor: pointer;
-    transition: background-color 0.2s, transform 0.1s; /* Add transform for a subtle click effect */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: background-color 0.2s, transform 0.1s;
+    box-shadow: 0 2px 5px var(--shadow-color);
 }
 
 button:hover {
-    background-color: #b1937e; /* Lighter on hover */
-    transform: translateY(-2px); /* Slight lift effect */
+    background-color: var(--ui-color);
+    transform: translateY(-2px);
 }
 
 button:active {
-    transform
-/* New CSS for the Settings Button */
-#status-bar {
-    /* Make status bar a positioning context */
-    position: relative; 
-    display: flex; /* Allow content to align */
-    justify-content: space-between; /* Push items to ends */
-    align-items: center;
-    /* ... rest of status bar styles ... */
+    transform: translateY(0);
+    box-shadow: 0 1px 3px var(--shadow-color);
 }
 
-.settings-button {
-    /* General button reset to look like a small icon */
+/* -------------------------------------------------------------------
+   3. Game UI Layout
+   ------------------------------------------------------------------- */
+
+#game-container {
+    width: 95%;
+    height: 95vh;
+    max-width: 1200px;
+    max-height: 800px;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-secondary);
+    border: 2px solid var(--ui-color);
+    border-radius: 10px;
+    box-shadow: 0 5px 20px var(--shadow-color);
+    overflow: hidden;
+}
+
+#status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--bg-primary);
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--ui-accent);
+    color: var(--text-color);
+    font-size: 0.9em;
+}
+
+#main-area {
+    display: flex;
+    flex-grow: 1;
+}
+
+#visual-novel-area {
+    flex: 2;
+    padding: 20px;
+    border-right: 1px solid var(--ui-accent);
+    overflow-y: auto;
+}
+
+#action-box {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+#dialogue-text {
+    background-color: var(--bg-primary);
+    border-left: 3px solid var(--ui-color);
+    padding: 10px;
+    margin-bottom: 20px;
+    font-style: italic;
+    color: var(--text-color);
+}
+
+/* -------------------------------------------------------------------
+   4. Status Bar Components (New)
+   ------------------------------------------------------------------- */
+
+.status-section {
+    display: flex;
+    align-items: center;
+    margin-right: 20px;
+}
+
+.label {
+    font-weight: bold;
+    margin-right: 5px;
+    color: var(--ui-color);
+}
+
+/* Health Bar Specifics */
+.health-bar-container {
+    width: 100px;
+    height: 15px;
+    background-color: var(--health-bg-color);
+    border: 1px solid var(--ui-color);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-right: 8px;
+}
+
+.health-bar-fill {
+    height: 100%;
+    background-color: var(--health-color);
+    transition: width 0.5s ease-out;
+}
+
+/* Icon Button (Settings) */
+.icon-button {
     background: none;
     border: none;
-    color: #555; /* Match status bar text */
     font-size: 1.5em;
-    cursor: pointer;
     padding: 0;
-    line-height: 1; /* Keep it centered */
-    margin-left: 10px;
+    cursor: pointer;
+    color: var(--ui-color);
+    transition: color 0.2s;
 }
 
-.settings-button:hover {
-    color: #4a2d1e; /* Highlight on hover */
-    transform: none; /* No lift effect for this icon */
+.icon-button:hover {
+    color: var(--ui-accent);
+    transform: none;
+}
+
+/* -------------------------------------------------------------------
+   5. Modal (Settings Pop-up)
+   ------------------------------------------------------------------- */
+
+.modal {
+    position: fixed;
+    z-index: 10;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent black overlay */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: var(--bg-secondary);
+    margin: auto;
+    padding: 30px;
+    border: 1px solid var(--ui-color);
+    border-radius: 8px;
+    width: 80%;
+    max-width: 400px;
+    box-shadow: 0 4px 8px 0 var(--shadow-color);
+    text-align: center;
+}
+
+.theme-selector button {
+    display: block;
+    width: 80%;
+    margin: 10px auto;
+    background-color: var(--ui-accent);
+    color: var(--bg-secondary);
+    padding: 8px;
+}
+
+.theme-selector button:hover {
+    background-color: var(--ui-color);
 }
