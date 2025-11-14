@@ -1,3 +1,5 @@
+// (main.js remains the same)
+
 // --- Element References ---
 const menuScreen = document.getElementById('menu-screen');
 const gameContainer = document.getElementById('game-container');
