@@ -133,12 +133,14 @@ const ENEMY_GOBLIN = {
 
 const rollDie = (max) => Math.floor(Math.random() * max) + 1;
 
+/**
+ * Rolls a specified number of coins (50/50 chance for 1 point per coin).
+ * Simplified to use a direct integer count for robustness.
+ */
 const rollCoins = (count) => {
     let sum = 0;
-    // Ensure count is a non-negative integer
-    const finalCount = Math.max(0, parseInt(count, 10) || 0); 
-    
-    for (let i = 0; i < finalCount; i++) {
+    // Count is assumed to be a non-negative integer here for minimal error handling
+    for (let i = 0; i < count; i++) {
         sum += (Math.random() < 0.5 ? 0 : 1); // 50% chance for 1
     }
     return sum;
@@ -492,13 +494,17 @@ function handleClash(pAbility, eAbility) {
         log(`DEBUG CLASH PARAMS: PCoins(${pCoins}) ECoins(${eCoins}) PDice(${pDice}) EDice(${eDice})`, 'log-debug'); 
 
         // 2. Calculate Clash Values
-        // NOTE: Changing 'const' to 'let' here to avoid potential environment-specific scope/re-initialization bugs
+        // Use 'let' for all values to prevent scope issues during calculation
         let playerRoll = rollDie(pDice);
         let playerCoinBonus = rollCoins(pCoins);
+        log(`DEBUG PLAYER ROLL: D${pDice} = ${playerRoll} | Coin Bonus(${pCoins}) = ${playerCoinBonus}`, 'log-debug');
+
         let playerClashValue = BASE_CLASH_VALUE + playerRoll + playerCoinBonus;
 
         let enemyRoll = rollDie(eDice);
         let enemyCoinBonus = rollCoins(eCoins);
+        log(`DEBUG ENEMY ROLL: D${eDice} = ${enemyRoll} | Coin Bonus(${eCoins}) = ${enemyCoinBonus}`, 'log-debug');
+        
         let enemyClashValue = BASE_CLASH_VALUE + enemyRoll + enemyCoinBonus;
 
         // This log confirms the calculation succeeded
