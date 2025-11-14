@@ -1,5 +1,3 @@
-// (main.js remains the same)
-
 // --- Element References ---
 const menuScreen = document.getElementById('menu-screen');
 const gameContainer = document.getElementById('game-container');
@@ -7,44 +5,108 @@ const newGameBtn = document.getElementById('new-game-btn');
 const loadGameBtn = document.getElementById('load-game-btn');
 const dialogueText = document.getElementById('dialogue-text');
 
-// --- Global Game State (The data we save) ---
+// Status Bar Elements
+const healthBarFill = document.getElementById('health-bar-fill');
+const healthValueSpan = document.getElementById('health-value');
+const currentStatusSpan = document.getElementById('current-status');
+
+// Settings Modal Elements
+const settingsBtn = document.getElementById('settings-btn');
+const settingsModal = document.getElementById('settings-modal');
+const closeModalBtn = document.getElementById('close-modal-btn');
+const themeOptionButtons = document.querySelectorAll('.theme-option-btn');
+
+// --- Global Game State ---
 let gameState = {
-    // Default initial state
     isGameStarted: false,
-    playerHP: 100,
+    maxHP: 100,
+    currentHP: 100,
+    status: "Alive",
     currentArea: "The Humble Beginning",
     characterID: null,
     inventory: []
 };
 
-// --- Core Functions ---
+// --- Theme Logic ---
+
+const THEME_KEY = 'gameTheme';
+const DEFAULT_THEME = 'default';
+
+function applyTheme(themeName) {
+    // Ensure the theme name is valid, otherwise use default
+    const effectiveTheme = ['default', 'retro', 'dark', 'light'].includes(themeName) ? themeName : DEFAULT_THEME;
+    
+    // Clear existing theme classes and add the new one
+    document.body.className = `theme-${effectiveTheme}`;
+
+    // Save the preference
+    localStorage.setItem(THEME_KEY, effectiveTheme);
+    console.log(`Theme set to: ${effectiveTheme}`);
+}
+
+// Function to handle theme button clicks
+function handleThemeSelection(event) {
+    const selectedTheme = event.target.dataset.theme;
+    applyTheme(selectedTheme);
+}
+
+// --- Status UI Management ---
+
+function updateStatusUI() {
+    // 1. Calculate percentage for Health Bar
+    const percent = (gameState.currentHP / gameState.maxHP) * 100;
+    
+    // 2. Update Health Bar Fill
+    healthBarFill.style.width = `${Math.max(0, percent)}%`; // Ensure width is not negative
+
+    // 3. Update Health Value Text
+    healthValueSpan.textContent = `${gameState.currentHP}/${gameState.maxHP}`;
+
+    // 4. Update Status Text
+    currentStatusSpan.textContent = gameState.status;
+}
+
+// --- Modal Logic ---
+
+function openSettingsModal() {
+    settingsModal.classList.remove('hidden');
+}
+
+function closeSettingsModal() {
+    settingsModal.classList.add('hidden');
+}
+
+
+// --- Core Game Flow Functions ---
 
 function startGame(isNewGame = true) {
-    // 1. Hide the menu and show the game
+    // Hide the menu and show the game
     menuScreen.classList.add('hidden');
     gameContainer.classList.remove('hidden');
     
     gameState.isGameStarted = true;
 
     if (isNewGame) {
-        // Reset or initialize new game data
-        // For now, we'll just show a message. Later: character selection/creation.
-        dialogueText.textContent = "A new journey begins. Which path will you choose?";
+        // Reset state for new game
+        gameState.currentHP = gameState.maxHP;
+        gameState.status = "Alive";
+        dialogueText.textContent = "A new journey begins. You are at full health.";
     } else {
-        // Load was successful (handled in loadGame)
+        // Loaded game logic
         dialogueText.textContent = `Welcome back! Loaded ${gameState.currentArea}.`;
     }
-
+    
+    // Always update UI on game start/load
+    updateStatusUI();
     console.log("Game started/loaded successfully.");
 }
 
 function saveGame() {
     try {
-        // Convert the JavaScript object to a JSON string
         const stateString = JSON.stringify(gameState);
-        // Store it in the browser's Local Storage
         localStorage.setItem('rogueVN_saveData', stateString);
         console.log("Game saved!");
+        // In a real app, you'd show a "Game Saved!" message here.
         return true;
     } catch (e) {
         console.error("Could not save game:", e);
@@ -57,44 +119,50 @@ function loadGame() {
     
     if (savedData) {
         try {
-            // Convert the JSON string back into a JavaScript object
             gameState = JSON.parse(savedData);
             console.log("Game loaded!");
-            
-            // Start the game with the loaded data
             startGame(false); 
         } catch (e) {
             console.error("Error parsing saved data:", e);
-            alert("Corrupt save file. Starting new game.");
+            // NOTE: Use console.error instead of alert for better UX in an iframe
+            console.error("Corrupt save file. Starting new game.");
             startGame(true);
         }
     } else {
-        alert("No saved game found. Please start a New Game.");
+        console.log("No saved game found. Please start a New Game.");
     }
 }
 
-// --- Event Listeners ---
 
-newGameBtn.addEventListener('click', () => {
-    // In a real game, you might ask "Are you sure? This will overwrite save data."
-    startGame(true); 
-    // Example: save the initial state immediately
-    // saveGame(); 
-});
+// --- Initialization and Event Listeners ---
 
-loadGameBtn.addEventListener('click', loadGame);
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Initialize Theme from Local Storage
+    const savedTheme = localStorage.getItem(THEME_KEY);
+    applyTheme(savedTheme || DEFAULT_THEME);
+    
+    // 2. Menu Button Listeners
+    newGameBtn.addEventListener('click', () => startGame(true));
+    loadGameBtn.addEventListener('click', loadGame);
 
-// --- Initial Check (Optional) ---
-// If you want the "Load Game" button to be visually disabled if no save exists.
-function checkSaveData() {
+    // 3. Settings Modal Listeners
+    settingsBtn.addEventListener('click', openSettingsModal);
+    closeModalBtn.addEventListener('click', closeSettingsModal);
+    
+    themeOptionButtons.forEach(button => {
+        button.addEventListener('click', handleThemeSelection);
+    });
+
+    // 4. Initial Save Check (optional feature)
     if (!localStorage.getItem('rogueVN_saveData')) {
         loadGameBtn.disabled = true;
         loadGameBtn.textContent = "No Save Found";
     }
-}
 
-// checkSaveData(); // Uncomment this line if you want to run the initial check
-
-// For testing purposes: a temporary save button in the console once the game starts
-// window.save = saveGame; 
-// Now you can call save() in the browser's console to test saving.
+    // Example of manipulating health for testing:
+    // setTimeout(() => {
+    //     gameState.currentHP = 75;
+    //     gameState.status = "Wounded";
+    //     updateStatusUI();
+    // }, 5000);
+});
