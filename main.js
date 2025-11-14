@@ -360,7 +360,7 @@ function resolveCombatRound() {
         log(`Both attack! Initiating CLASH...`, 'log-special');
         handleClash(playerAbility, enemyAbility);
         
-        // This log should tell us if control returned from the clash gracefully
+        // This log confirms if control returned gracefully after the clash function
         log(`DEBUG: Clash finished. Resuming combat flow...`, 'log-debug'); 
         
         // CRITICAL FIX: Check for game over immediately after clash damage is applied
@@ -466,12 +466,15 @@ function executeSingleAction(attacker, ability, target) {
  */
 function handleClash(pAbility, eAbility) {
     try {
-        // CRITICAL CHECK: Ensure both abilities are defined before attempting to access properties
+        // CRITICAL CHECK 1: Ensure both abilities are defined before attempting to access properties
         if (!pAbility || !eAbility) {
             log(`CRITICAL: Missing Player(${!!pAbility}) or Enemy(${!!eAbility}) ability object in Clash.`, 'log-loss');
             return; 
         }
 
+        // CRITICAL CHECK 2: Logs the actual names of the abilities used
+        log(`DEBUG ABILITY NAMES: P(${pAbility.name}) vs E(${eAbility.name})`, 'log-debug');
+        
         // 1. Determine final coin count (Using safe fallbacks)
         const basePlayerCoins = typeof pAbility.coins === 'number' ? pAbility.coins : 0;
         const baseEnemyCoins = typeof eAbility.coins === 'number' ? eAbility.coins : 0;
@@ -488,7 +491,7 @@ function handleClash(pAbility, eAbility) {
         const pDice = typeof pAbility.dice === 'number' && pAbility.dice > 0 ? pAbility.dice : 1;
         const eDice = typeof eAbility.dice === 'number' && eAbility.dice > 0 ? eAbility.dice : 1;
 
-        // NEW DETAILED LOG
+        // Final sanity check log before rolls
         log(`DEBUG CLASH PARAMS: PCoins(${pCoins}) ECoins(${eCoins}) PDice(${pDice}) EDice(${eDice})`, 'log-debug'); 
 
         // 2. Calculate Clash Values
