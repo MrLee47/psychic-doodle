@@ -135,7 +135,10 @@ const rollDie = (max) => Math.floor(Math.random() * max) + 1;
 
 const rollCoins = (count) => {
     let sum = 0;
-    for (let i = 0; i < count; i++) {
+    // Ensure count is a positive number
+    const finalCount = Math.max(0, parseInt(count, 10) || 0); 
+    
+    for (let i = 0; i < finalCount; i++) {
         sum += (Math.random() < 0.5 ? 0 : 1); // 50% chance for 1
     }
     return sum;
@@ -356,7 +359,7 @@ function resolveCombatRound() {
         log(`Both attack! Initiating CLASH...`, 'log-special');
         handleClash(playerAbility, enemyAbility);
         
-        // FIX: Check for game over immediately after clash damage is applied
+        // CRITICAL FIX: Check for game over immediately after clash damage is applied
         if (checkGameOver()) return; 
     
     // Case 2: Mixed Actions -> Speed determines priority
@@ -393,6 +396,9 @@ function resolveCombatRound() {
         // Resolve Second Action
         log(`${second.name} (${secondAbility.name}) acts second.`, 'log-special');
         executeSingleAction(second, secondAbility, first);
+        
+        // CRITICAL FIX: Check for game over after the second action resolves
+        if (checkGameOver()) return; 
     }
     
     // 3. Cleanup and Next Turn Setup
@@ -454,56 +460,65 @@ function executeSingleAction(attacker, ability, target) {
  * 3. The Core Clash Logic (When both characters attack)
  */
 function handleClash(pAbility, eAbility) {
-    // 1. Determine final coin count (Striker passive applied here)
-    const pCoins = pAbility.coins + (gameState.player.id === 'striker' ? gameState.player.baseStats.consecutive_rounds : 0);
-    const eCoins = eAbility.coins;
+    try {
+        // 1. Determine final coin count (Striker passive applied here)
+        // Coins = Base Coins + Passive Bonus
+        const pCoins = pAbility.coins + (gameState.player.id === 'striker' ? gameState.player.baseStats.consecutive_rounds : 0);
+        const eCoins = eAbility.coins;
 
-    // 2. Calculate Clash Values
-    const playerRoll = rollDie(pAbility.dice);
-    const playerCoinBonus = rollCoins(pCoins);
-    const playerClashValue = BASE_CLASH_VALUE + playerRoll + playerCoinBonus;
+        // DIAGNOSTIC LOG: Check if calculation point is reached
+        log(`DEBUG CLASH COINS: P(${pCoins}) vs E(${eCoins})`, 'log-debug'); 
 
-    const enemyRoll = rollDie(eAbility.dice);
-    const enemyCoinBonus = rollCoins(eCoins);
-    const enemyClashValue = BASE_CLASH_VALUE + enemyRoll + enemyCoinBonus;
+        // 2. Calculate Clash Values
+        const playerRoll = rollDie(pAbility.dice);
+        const playerCoinBonus = rollCoins(pCoins);
+        const playerClashValue = BASE_CLASH_VALUE + playerRoll + playerCoinBonus;
 
-    log(`Clash! P Roll: ${playerRoll}+${playerCoinBonus} = ${playerClashValue} | E Roll: ${enemyRoll}+${enemyCoinBonus} = ${enemyClashValue}`);
+        const enemyRoll = rollDie(eAbility.dice);
+        const enemyCoinBonus = rollCoins(eCoins);
+        const enemyClashValue = BASE_CLASH_VALUE + enemyRoll + enemyCoinBonus;
 
-    let winner, loser, winnerAbility;
+        log(`Clash! P Roll: ${playerRoll}+${playerCoinBonus} = ${playerClashValue} | E Roll: ${enemyRoll}+${enemyCoinBonus} = ${enemyClashValue}`);
 
-    // Balter Grapple Check: Grappled target auto-loses clash
-    const isEnemyGrappled = gameState.enemy.baseStats.effects.includes('Grappled');
-    
-    if (isEnemyGrappled) {
-        winner = gameState.player;
-        loser = gameState.enemy;
-        winnerAbility = pAbility;
-        log(`${gameState.enemy.name} is Grappled and automatically loses the clash!`, 'log-loss');
-    } else if (playerClashValue >= enemyClashValue) {
-        winner = gameState.player;
-        loser = gameState.enemy;
-        winnerAbility = pAbility;
-    } else {
-        winner = gameState.enemy;
-        loser = gameState.player;
-        winnerAbility = eAbility;
-    }
+        let winner, loser, winnerAbility;
 
-    log(`${winner.name} wins the clash!`, 'log-win');
+        // Balter Grapple Check: Grappled target auto-loses clash
+        const isEnemyGrappled = gameState.enemy.baseStats.effects.includes('Grappled');
+        
+        if (isEnemyGrappled) {
+            winner = gameState.player;
+            loser = gameState.enemy;
+            winnerAbility = pAbility;
+            log(`${gameState.enemy.name} is Grappled and automatically loses the clash!`, 'log-loss');
+        } else if (playerClashValue >= enemyClashValue) {
+            winner = gameState.player;
+            loser = gameState.enemy;
+            winnerAbility = pAbility;
+        } else {
+            winner = gameState.enemy;
+            loser = gameState.player;
+            winnerAbility = eAbility;
+        }
 
-    // Damage is applied by the winner's attack
-    const coinBonus = winner.id === gameState.player.id ? playerCoinBonus : enemyCoinBonus;
-    const diceRoll = winner.id === gameState.player.id ? playerRoll : enemyRoll;
+        log(`${winner.name} wins the clash!`, 'log-win');
 
-    applyDamage(winnerAbility, winner, loser, coinBonus, diceRoll);
-    
-    // --- Balter's "The Old One, Two" Passive ---
-    if (winner.id === 'balter' && winner.uniquePassive.type === 'ClashWinBonus' && loser.baseStats.currentHP > 0) {
-        const bonusDamageRoll = rollDie(winner.uniquePassive.dice);
-        // Apply loser's defense to the bonus hit
-        const bonusDamage = Math.max(0, bonusDamageRoll - loser.baseStats.defense); 
-        loser.baseStats.currentHP = Math.max(0, loser.baseStats.currentHP - bonusDamage);
-        log(`Balter follows up with "The Old One, Two" for an extra ${bonusDamage} damage! (d${winner.uniquePassive.dice} roll: ${bonusDamageRoll})`, 'log-win');
+        // Damage is applied by the winner's attack
+        const coinBonus = winner.id === gameState.player.id ? playerCoinBonus : enemyCoinBonus;
+        const diceRoll = winner.id === gameState.player.id ? playerRoll : enemyRoll;
+
+        applyDamage(winnerAbility, winner, loser, coinBonus, diceRoll);
+        
+        // --- Balter's "The Old One, Two" Passive ---
+        if (winner.id === 'balter' && winner.uniquePassive.type === 'ClashWinBonus' && loser.baseStats.currentHP > 0) {
+            const bonusDamageRoll = rollDie(winner.uniquePassive.dice);
+            // Apply loser's defense to the bonus hit
+            const bonusDamage = Math.max(0, bonusDamageRoll - loser.baseStats.defense); 
+            loser.baseStats.currentHP = Math.max(0, loser.baseStats.currentHP - bonusDamage);
+            log(`Balter follows up with "The Old One, Two" for an extra ${bonusDamage} damage! (d${winner.uniquePassive.dice} roll: ${bonusDamageRoll})`, 'log-win');
+        }
+    } catch (error) {
+        log(`CRITICAL CLASH ERROR: Clash resolution failed. Check console for details.`, 'log-loss');
+        console.error("Clash resolution failed:", error);
     }
 }
 
@@ -578,6 +593,9 @@ function endTurnCleanup() {
  * Checks for a winner/loser and displays the game over screen.
  */
 function checkGameOver() {
+    // CRITICAL FIX: Update the UI one last time to reflect the defeat status
+    updateCombatUI(); 
+    
     if (gameState.player.baseStats.currentHP <= 0) {
         gameState.player.baseStats.status = 'Defeated';
         log(`${gameState.player.name} has been defeated. Game Over.`, 'log-loss');
