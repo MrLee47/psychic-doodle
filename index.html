@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chronicles of Heroes: Erebos</title>
+    <title>Placeholder Roguelike</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -32,6 +32,11 @@
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Lighter shadow for light mode */
             border: 1px solid #d1d5db; /* Light border */
+        }
+
+        /* NEW: Added position relative for the clash visualizer to work */
+        #visuals-panel {
+            position: relative;
         }
 
         .hp-bar-inner {
@@ -95,6 +100,28 @@
             border: 3px solid var(--hp-color) !important;
             box-shadow: 0 0 8px rgba(220, 38, 38, 0.5) !important;
         }
+
+        /* NEW: Clash Visualizer Styles */
+        #clash-visualizer {
+            z-index: 10;
+        }
+        .dice-spin {
+            font-family: monospace; 
+            animation: dice-spin 0.2s infinite alternate;
+        }
+        .text-hp-color { color: var(--hp-color); }
+        .text-mp-color { color: var(--mp-color); }
+        .clash-card {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            min-width: 150px;
+        }
+
+        @keyframes dice-spin {
+            0% { transform: scale(1.0) rotate(0deg); opacity: 0.8; }
+            100% { transform: scale(1.1) rotate(5deg); opacity: 1.0; }
+        }
     </style>
 </head>
 <body class="min-h-screen p-4 flex flex-col items-center">
@@ -134,10 +161,10 @@
         </div>
     </div>
 
-    <!-- MAIN GAME CONTAINER WRAPPER - NEW GRID LAYOUT -->
-    <div id="main-game-wrapper" class="hidden w-full max-w-7xl px-4 mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- MAIN GAME CONTAINER WRAPPER - UPDATED GRID LAYOUT (cols-5) -->
+    <div id="main-game-wrapper" class="hidden w-full max-w-7xl px-4 mt-8 grid grid-cols-1 lg:grid-cols-5 gap-6">
 
-        <!-- VISUALS PANEL (Left/Center Column on Desktop) -->
+        <!-- VISUALS PANEL (Left Column - 40% width on desktop) -->
         <div id="visuals-panel" class="section-box lg:col-span-2 p-4 flex flex-col items-center justify-center min-h-[300px] lg:min-h-[600px] space-y-4">
             <h2 class="text-3xl font-bold text-accent-color">Combat View</h2>
             <div id="animation-slot" class="text-4xl text-gray-400">
@@ -145,19 +172,24 @@
                 <div class="flex space-x-12">
                     <div id="player-sprite" class="text-center">
                         <span class="text-7xl">🛡️</span>
-                        <p class="text-xl font-bold mt-2">Hero</p>
+                        <p id="player-sprite-name" class="text-xl font-bold mt-2">Hero</p>
                     </div>
-                    <div id="enemy-sprite" class="text-center">
+                    <div id="enemy-sprite" class="text-center hidden">
                         <span class="text-7xl">👹</span>
-                        <p class="text-xl font-bold mt-2">Enemy</p>
+                        <p id="enemy-sprite-name" class="text-xl font-bold mt-2">Enemy</p>
                     </div>
                 </div>
             </div>
             <p id="visual-context" class="text-sm italic text-gray-400 mt-4">Current Room: Ready to fight.</p>
+
+            <!-- NEW: CLASH VISUALIZER (Starts hidden) -->
+            <div id="clash-visualizer" class="absolute inset-0 bg-gray-900 bg-opacity-75 backdrop-blur-sm hidden flex-col justify-center items-center text-white p-4 rounded-lg">
+                <!-- Content injected by JS during clash -->
+            </div>
         </div>
 
-        <!-- GAME UI COLUMN (Right Column on Desktop) -->
-        <div id="game-container" class="w-full space-y-6 lg:col-span-1">
+        <!-- GAME UI COLUMN (Right Column - 60% width on desktop) -->
+        <div id="game-container" class="w-full space-y-6 lg:col-span-3">
 
             <!-- STATUS BARS & HEADER -->
             <div id="status-bars" class="space-y-4">
@@ -194,8 +226,8 @@
                 <p id="dialogue-text" class="text-lg italic mt-2">Welcome to the adventure!</p>
             </div>
 
-            <!-- COMBAT LOG -->
-            <div class="section-box p-4 h-64 overflow-y-auto flex flex-col-reverse">
+            <!-- COMBAT LOG (Increased Height) -->
+            <div class="section-box p-4 h-[400px] overflow-y-auto flex flex-col-reverse">
                 <h3 class="text-xl font-bold border-b border-gray-300 pb-2 mb-2 text-text-color">Event Log</h3>
                 <div id="combat-log" class="space-y-1">
                     <!-- Combat/Dungeon Log Entries Here -->
@@ -388,9 +420,14 @@ const actionButtonsDiv = document.getElementById('action-buttons');
 const combatLog = document.getElementById('combat-log');
 const passTurnBtn = document.getElementById('pass-turn-btn'); 
 const actionHeader = document.getElementById('action-header');
-const visualContext = document.getElementById('visual-context'); // NEW
-const playerSprite = document.getElementById('player-sprite'); // NEW
-const enemySprite = document.getElementById('enemy-sprite'); // NEW
+const visualContext = document.getElementById('visual-context'); 
+const playerSprite = document.getElementById('player-sprite'); 
+const enemySprite = document.getElementById('enemy-sprite'); 
+const playerSpriteName = document.getElementById('player-sprite-name');
+const enemySpriteName = document.getElementById('enemy-sprite-name');
+
+// Combat Visualizer
+const clashVisualizer = document.getElementById('clash-visualizer'); // NEW
 
 // Dungeon UI
 const areaDisplay = document.getElementById('area-display');
@@ -488,6 +525,44 @@ function log(message, className = '') {
     }
 }
 
+/**
+ * NEW: Displays a visual overlay for the clash, waiting for a fixed duration.
+ */
+function startClashVisuals(pRoll, pCoins, eRoll, eCoins) {
+    return new Promise(resolve => {
+        clashVisualizer.classList.remove('hidden');
+        clashVisualizer.classList.add('flex');
+        
+        // Generate coin emojis
+        let pCoinsHtml = Array(pCoins).fill('🪙').join('');
+        let eCoinsHtml = Array(eCoins).fill('🪙').join('');
+
+        // Generate the visual content
+        clashVisualizer.innerHTML = `
+            <div class="text-4xl font-bold mb-8 text-accent-color animate-pulse">CLASH!</div>
+            <div class="flex justify-around w-full max-w-lg">
+                <div class="text-center space-y-4 clash-card">
+                    <p class="text-xl font-semibold">${gameState.player.name}</p>
+                    <div class="text-7xl dice-spin text-hp-color">${pRoll}</div>
+                    <p class="text-2xl">${pCoinsHtml || '(No Coins)'}</p>
+                </div>
+                <div class="text-center space-y-4 clash-card">
+                    <p class="text-xl font-semibold">${gameState.enemy.name}</p>
+                    <div class="text-7xl dice-spin text-mp-color">${eRoll}</div>
+                    <p class="text-2xl">${eCoinsHtml || '(No Coins)'}</p>
+                </div>
+            </div>
+            <p class="mt-8 text-xl">Determining outcome...</p>
+        `;
+
+        // Wait for 2.5 seconds before resolving, which allows the combat logic to continue
+        setTimeout(() => {
+            clashVisualizer.classList.add('hidden');
+            clashVisualizer.classList.remove('flex');
+            resolve();
+        }, 2500);
+    });
+}
 
 // --- THEME & SETTINGS LOGIC (Simplified) ---
 
@@ -604,11 +679,13 @@ function updateCombatUI() {
     // Player status is always updated
     updateHealthDisplay(gameState.player, playerStatus);
     playerStatus.name.textContent = gameState.player.name;
+    playerSpriteName.textContent = gameState.player.name;
 
     // Enemy status is only updated if an enemy exists (i.e., we are in combat)
     if (gameState.enemy) {
         updateHealthDisplay(gameState.enemy, enemyStatus);
         enemyStatus.name.textContent = gameState.enemy.name;
+        enemySpriteName.textContent = gameState.enemy.name;
         enemyStatusCard.classList.remove('hidden');
         visualContext.textContent = `VS ${gameState.enemy.name} | Turn ${gameState.turn}`;
         enemySprite.classList.remove('hidden');
@@ -795,7 +872,7 @@ function executeAbility(ability) {
 
     selectEnemyAction();
     
-    setTimeout(resolveCombatRound, 500);
+    resolveCombatRound(); // Now calls async function directly
 }
 
 /**
@@ -838,8 +915,9 @@ function selectEnemyAction() {
 
 /**
  * 2. Main Turn Resolution: Determines action order and resolves conflict.
+ * Now an async function to wait for visual feedback during Clash.
  */
-function resolveCombatRound() {
+async function resolveCombatRound() {
     const playerAbility = gameState.playerAction;
     const enemyAbility = gameState.enemyAction;
 
@@ -851,14 +929,14 @@ function resolveCombatRound() {
         
         if (enemyAbility.type !== 'ATTACK' || enemyAbility.type === 'NONE') {
             log(`...continuing to cleanup.`, 'log-special');
-            setTimeout(endTurnCleanup, 1000);
+            endTurnCleanup();
             return;
         } 
         
         log(`${gameState.enemy.name} attacks while ${gameState.player.name} is Staggered!`, 'log-win');
         executeSingleAction(gameState.enemy, enemyAbility, gameState.player);
         if (checkGameOver()) return;
-        setTimeout(endTurnCleanup, 1000);
+        endTurnCleanup();
         return;
     }
 
@@ -873,7 +951,7 @@ function resolveCombatRound() {
     // Case 1: Both ATTACK -> CLASH
     if (pType === 'ATTACK' && eType === 'ATTACK') {
         log(`Both attack! Initiating CLASH...`, 'log-special');
-        handleClash(playerAbility, enemyAbility);
+        await handleClash(playerAbility, enemyAbility); // WAIT for visualizer
         
         if (checkGameOver()) return; 
     
@@ -903,7 +981,8 @@ function resolveCombatRound() {
 
         // --- Resolve First Action ---
         log(`${first.name} (${firstAbility.name}) acts first.`, 'log-special');
-        executeSingleAction(first, firstAbility, second);
+        // No visualizer for single action, execution is synchronous
+        executeSingleAction(first, firstAbility, second); 
         if (checkGameOver()) return;
         
         // --- Resolve Second Action ---
@@ -921,7 +1000,8 @@ function resolveCombatRound() {
         if (checkGameOver()) return; 
     }
     
-    setTimeout(endTurnCleanup, 1000);
+    // Cleanup happens once the execution path is complete
+    endTurnCleanup(); 
 }
 
 /**
@@ -997,8 +1077,9 @@ function executeSingleAction(attacker, ability, target) {
 
 /**
  * 3. The Core Clash Logic (When both characters attack)
+ * Now an async function to wait for the visualizer.
  */
-function handleClash(pAbility, eAbility) {
+async function handleClash(pAbility, eAbility) { 
     try {
         if (!pAbility || !eAbility) {
             log(`CRITICAL: Missing Player or Enemy ability object in Clash.`, 'log-loss');
@@ -1036,6 +1117,9 @@ function handleClash(pAbility, eAbility) {
         const playerCoinBonus = rollCoins(pCoins); 
         const enemyCoinBonus = rollCoins(eCoins); 
 
+        // --- NEW: WAIT FOR VISUALIZATION TO COMPLETE ---
+        await startClashVisuals(playerRoll, pCoins, enemyRoll, eCoins); 
+
         const playerClashValue = BASE_CLASH_VALUE + playerRoll + playerCoinBonus;
         const enemyClashValue = BASE_CLASH_VALUE + enemyRoll + enemyCoinBonus;
         
@@ -1057,15 +1141,16 @@ function handleClash(pAbility, eAbility) {
             winnerAbility = resolvedPAbility;
             winnerCoinBonus = playerCoinBonus;
             winnerDiceRoll = playerRoll;
+            log(`${winner.name} wins the clash! (Rolls: ${playerRoll}+${playerCoinBonus} vs ${enemyRoll}+${enemyCoinBonus})`, 'log-win');
         } else {
             winner = gameState.enemy;
             loser = gameState.player;
             winnerAbility = eAbility;
             winnerCoinBonus = enemyCoinBonus; 
-            winnerDiceRoll = enemyRoll;       
+            winnerDiceRoll = enemyRoll;  
+            log(`${winner.name} wins the clash! (Rolls: ${enemyRoll}+${enemyCoinBonus} vs ${playerRoll}+${playerCoinBonus})`, 'log-loss');     
         }
 
-        log(`${winner.name} wins the clash!`, 'log-win');
 
         // --- 6. APPLY DAMAGE ---
         if (winnerAbility && typeof winnerAbility === 'object') {
