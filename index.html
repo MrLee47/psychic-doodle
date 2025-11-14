@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Placeholder Roguelike</title>
+    <title>Chronicles of Heroes: Erebos</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         /* UPDATED: Switched to a Cream/Black color scheme for light mode */
         :root {
@@ -101,13 +101,13 @@
             box-shadow: 0 0 8px rgba(220, 38, 38, 0.5) !important;
         }
 
-        /* NEW: Clash Visualizer Styles */
+        /* UPDATED: Clash Visualizer Styles */
         #clash-visualizer {
             z-index: 10;
         }
-        .dice-spin {
-            font-family: monospace; 
-            animation: dice-spin 0.2s infinite alternate;
+        .dice-slot-digit {
+            font-family: 'Inter', monospace, sans-serif;
+            font-weight: 900;
         }
         .text-hp-color { color: var(--hp-color); }
         .text-mp-color { color: var(--mp-color); }
@@ -118,9 +118,13 @@
             min-width: 150px;
         }
 
-        @keyframes dice-spin {
-            0% { transform: scale(1.0) rotate(0deg); opacity: 0.8; }
-            100% { transform: scale(1.1) rotate(5deg); opacity: 1.0; }
+        .clash-dice-box, .clash-coin-box {
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            border-radius: 4px;
         }
     </style>
 </head>
@@ -217,13 +221,15 @@
                 </div>
             </div>
 
-            <!-- DIALOGUE & ROOM INFO -->
+            <!-- UPDATED: ROOM INFO CARD (SEPARATED FROM DIALOGUE) -->
+            <div id="room-info-card" class="section-box p-4 flex justify-between font-semibold border-b border-gray-300 pb-2">
+                <span id="area-display" class="text-accent-color">Area: Erebos</span>
+                <span id="room-progress-display" class="text-gray-600">Room 1/6</span>
+            </div>
+
+            <!-- DIALOGUE BOX -->
             <div class="section-box p-4">
-                <div id="room-info" class="text-lg font-semibold mb-2 flex justify-between border-b border-gray-300 pb-2">
-                    <span id="area-display" class="text-accent-color">Area: Erebos</span>
-                    <span id="room-progress-display" class="text-gray-600">Room 1/6</span>
-                </div>
-                <p id="dialogue-text" class="text-lg italic mt-2">Welcome to the adventure!</p>
+                <p id="dialogue-text" class="text-lg italic">Welcome to the adventure!</p>
             </div>
 
             <!-- COMBAT LOG (Increased Height) -->
@@ -375,7 +381,8 @@ const CHARACTERS = [
         name: 'Balter',
         description: 'A wrestling powerhouse who controls the battlefield.',
         baseStats: { maxHP: 130, defense: 3, level: 1, currentHP: 130, status: 'Alive', isGrappling: false, grapple_die: 8, effects: [], speed: 1, gender: 'Male' },
-        uniquePassive: { name: 'The Old One, Two', type: 'ClashWinBonus', dice: 4 }, 
+        // FIX: Increased passive dice from 4 to 10 for more noticeable bonus damage.
+        uniquePassive: { name: 'The Old One, Two', type: 'ClashWinBonus', dice: 10 }, 
         abilities: [
             { name: 'Haymaker', type: 'ATTACK', damageType: 'Physical', baseAttack: 7, dice: 10, coins: 1, },
             { name: 'Grapple', type: 'SPECIAL', effect: 'Rolls d10 vs. target\'s Grapple Die. Success applies Grappled status. Target auto-loses next clash.', statusApplied: 'Grappled', baseAttack: 0, dice: 10, coins: 0, targetGrappleDie: 8 },
@@ -428,6 +435,8 @@ const enemySpriteName = document.getElementById('enemy-sprite-name');
 
 // Combat Visualizer
 const clashVisualizer = document.getElementById('clash-visualizer'); // NEW
+const clashDiceSlotId = 'clash-dice-slot';
+const clashCoinSlotId = 'clash-coin-slot';
 
 // Dungeon UI
 const areaDisplay = document.getElementById('area-display');
@@ -526,41 +535,105 @@ function log(message, className = '') {
 }
 
 /**
- * NEW: Displays a visual overlay for the clash, waiting for a fixed duration.
+ * NEW: Function to simulate a slot machine spin for dice/coins.
  */
-function startClashVisuals(pRoll, pCoins, eRoll, eCoins) {
+function runSlotAnimation(elementId, maxVal, isCoin) {
+    const slotElement = document.getElementById(elementId);
+    if (!slotElement) return null;
+
+    let interval;
+    const animationStart = performance.now();
+    const duration = 2000; // 2 seconds spin
+
+    const spin = () => {
+        if (performance.now() - animationStart < duration) {
+            let randomValue;
+            if (isCoin) {
+                // For coins, just cycle between head and tail emojis
+                randomValue = Math.random() > 0.5 ? '🥇' : '🥈';
+            } else {
+                // For dice, cycle through random numbers up to maxVal
+                randomValue = rollDie(maxVal);
+            }
+            slotElement.textContent = randomValue;
+        } else {
+            clearInterval(interval);
+        }
+    };
+
+    // Start a fast interval to change numbers
+    interval = setInterval(spin, 50);
+    return interval; // Return the interval ID so it can be stopped later
+}
+
+/**
+ * UPDATED: Displays a visual overlay for the clash, waiting for a fixed duration.
+ */
+function startClashVisuals(pDiceMax, pCoins, eDiceMax, eCoins, pFinalRoll, pFinalCoin, eFinalRoll, eFinalCoin) {
     return new Promise(resolve => {
         clashVisualizer.classList.remove('hidden');
         clashVisualizer.classList.add('flex');
         
-        // Generate coin emojis
-        let pCoinsHtml = Array(pCoins).fill('🪙').join('');
-        let eCoinsHtml = Array(eCoins).fill('🪙').join('');
+        const coinEmoji = (count, result) => {
+            if (count === 0) return '(No Coins)';
+            // Show result: Gold for win (1 point), Silver for loss (0 points)
+            return Array(count).fill('🪙').map((c, i) => i < result ? '🥇' : '🥈').join('');
+        };
 
-        // Generate the visual content
+        // Generate the visual content with dedicated slot IDs
         clashVisualizer.innerHTML = `
             <div class="text-4xl font-bold mb-8 text-accent-color animate-pulse">CLASH!</div>
             <div class="flex justify-around w-full max-w-lg">
                 <div class="text-center space-y-4 clash-card">
                     <p class="text-xl font-semibold">${gameState.player.name}</p>
-                    <div class="text-7xl dice-spin text-hp-color">${pRoll}</div>
-                    <p class="text-2xl">${pCoinsHtml || '(No Coins)'}</p>
+                    <div id="p-dice-box" class="clash-dice-box bg-red-800">
+                        <span id="p-${clashDiceSlotId}" class="text-7xl dice-slot-digit text-white">?</span>
+                    </div>
+                    <p class="text-2xl" id="p-${clashCoinSlotId}"></p>
                 </div>
                 <div class="text-center space-y-4 clash-card">
                     <p class="text-xl font-semibold">${gameState.enemy.name}</p>
-                    <div class="text-7xl dice-spin text-mp-color">${eRoll}</div>
-                    <p class="text-2xl">${eCoinsHtml || '(No Coins)'}</p>
+                    <div id="e-dice-box" class="clash-dice-box bg-blue-800">
+                        <span id="e-${clashDiceSlotId}" class="text-7xl dice-slot-digit text-white">?</span>
+                    </div>
+                    <p class="text-2xl" id="e-${clashCoinSlotId}"></p>
                 </div>
             </div>
-            <p class="mt-8 text-xl">Determining outcome...</p>
+            <p class="mt-8 text-xl">Rolling...</p>
         `;
 
-        // Wait for 2.5 seconds before resolving, which allows the combat logic to continue
+        // 1. Start slot animations
+        const pDiceInterval = runSlotAnimation(`p-${clashDiceSlotId}`, pDiceMax, false);
+        const eDiceInterval = runSlotAnimation(`e-${clashDiceSlotId}`, eDiceMax, false);
+        
+        const pCoinInterval = runSlotAnimation(`p-${clashCoinSlotId}`, pCoins, true);
+        const eCoinInterval = runSlotAnimation(`e-${clashCoinSlotId}`, eCoins, true);
+
+
+        // 2. Wait for 2 seconds, then stop and display final results
         setTimeout(() => {
-            clashVisualizer.classList.add('hidden');
-            clashVisualizer.classList.remove('flex');
-            resolve();
-        }, 2500);
+            clearInterval(pDiceInterval);
+            clearInterval(eDiceInterval);
+            clearInterval(pCoinInterval);
+            clearInterval(eCoinInterval);
+
+            // Update with final values
+            document.getElementById(`p-${clashDiceSlotId}`).textContent = pFinalRoll;
+            document.getElementById(`e-${clashDiceSlotId}`).textContent = eFinalRoll;
+            document.getElementById(`p-${clashCoinSlotId}`).innerHTML = coinEmoji(pCoins, pFinalCoin);
+            document.getElementById(`e-${clashCoinSlotId}`).innerHTML = coinEmoji(eCoins, eFinalCoin);
+            
+            // Update context
+            clashVisualizer.querySelector('p.mt-8').textContent = 'Results are in!';
+
+            // 3. Wait 0.5 seconds for final result display before returning
+            setTimeout(() => {
+                clashVisualizer.classList.add('hidden');
+                clashVisualizer.classList.remove('flex');
+                resolve();
+            }, 500);
+
+        }, 2000); // Total animation time is 2.5 seconds (2s spin + 0.5s pause)
     });
 }
 
@@ -1039,7 +1112,7 @@ function executeSingleAction(attacker, ability, target) {
                 target.baseStats.effects.push('Grappled');
                 log(`${attacker.name} successfully grapples ${target.name}! ${target.name} auto-loses the next clash.`, 'log-win');
             } else {
-                log(`${attacker.name} fails to grapple ${target.name}.`, 'log-loss');
+                log(`${attacker.name} fails to grapple ${target.name}. (Roll: ${attackerRoll} vs ${targetRoll})`, 'log-loss');
             }
         }
         
@@ -1112,13 +1185,14 @@ async function handleClash(pAbility, eAbility) {
         const pCoins = basePlayerCoins + strikerBonus;
         const eCoins = baseEnemyCoins;
 
+        // Perform actual rolls *before* starting the animation
         const playerRoll = rollDie(pDice);
         const enemyRoll = rollDie(eDice);
         const playerCoinBonus = rollCoins(pCoins); 
         const enemyCoinBonus = rollCoins(eCoins); 
 
         // --- NEW: WAIT FOR VISUALIZATION TO COMPLETE ---
-        await startClashVisuals(playerRoll, pCoins, enemyRoll, eCoins); 
+        await startClashVisuals(pDice, pCoins, eDice, eCoins, playerRoll, playerCoinBonus, enemyRoll, enemyCoinBonus); 
 
         const playerClashValue = BASE_CLASH_VALUE + playerRoll + playerCoinBonus;
         const enemyClashValue = BASE_CLASH_VALUE + enemyRoll + enemyCoinBonus;
@@ -1141,14 +1215,14 @@ async function handleClash(pAbility, eAbility) {
             winnerAbility = resolvedPAbility;
             winnerCoinBonus = playerCoinBonus;
             winnerDiceRoll = playerRoll;
-            log(`${winner.name} wins the clash! (Rolls: ${playerRoll}+${playerCoinBonus} vs ${enemyRoll}+${enemyCoinBonus})`, 'log-win');
+            log(`${winner.name} wins the clash! (Clash: ${playerClashValue} vs ${enemyClashValue})`, 'log-win');
         } else {
             winner = gameState.enemy;
             loser = gameState.player;
             winnerAbility = eAbility;
             winnerCoinBonus = enemyCoinBonus; 
             winnerDiceRoll = enemyRoll;  
-            log(`${winner.name} wins the clash! (Rolls: ${enemyRoll}+${enemyCoinBonus} vs ${playerRoll}+${playerCoinBonus})`, 'log-loss');     
+            log(`${winner.name} wins the clash! (Clash: ${enemyClashValue} vs ${playerClashValue})`, 'log-loss');     
         }
 
 
@@ -1161,10 +1235,14 @@ async function handleClash(pAbility, eAbility) {
 
         // 7. Balter's "The Old One, Two" Passive
         if (winner.id === 'balter' && winner.uniquePassive.type === 'ClashWinBonus' && loser.baseStats.currentHP > 0) {
-            const bonusDamageRoll = rollDie(winner.uniquePassive.dice);
-            const bonusDamage = Math.max(0, bonusDamageRoll - loser.baseStats.defense); 
+            const bonusDiceMax = winner.uniquePassive.dice;
+            const bonusDamageRoll = rollDie(bonusDiceMax);
+            
+            // UPDATED: Balter's passive ignores defense
+            const bonusDamage = bonusDamageRoll; 
+            
             loser.baseStats.currentHP = Math.max(0, loser.baseStats.currentHP - bonusDamage);
-            log(`Balter follows up with "The Old One, Two" for an extra ${bonusDamage} damage! (d${winner.uniquePassive.dice} roll: ${bonusDamageRoll})`, 'log-win');
+            log(`Balter follows up with "The Old One, Two"! Roll d${bonusDiceMax} (${bonusDamageRoll}). **Ignores Defense**, dealing ${bonusDamage} extra damage!`, 'log-win');
         }
         
         // 8. Apply Stagger to LOSER
@@ -1193,19 +1271,38 @@ async function handleClash(pAbility, eAbility) {
 function applyDamage(ability, attacker, target, coinBonus = rollCoins(ability.coins), diceRoll = rollDie(ability.dice)) {
     if (!Array.isArray(target.baseStats.effects)) { target.baseStats.effects = []; }
 
-    let damage = (ability.baseAttack || 0) + (coinBonus || 0) + (diceRoll || 0); // Added dice roll to base damage calculation
-    
-    let finalDamage = Math.max(0, damage - target.baseStats.defense);
+    let damage = (ability.baseAttack || 0) + (coinBonus || 0) + (diceRoll || 0); // Total raw power (Base + Coin + Dice)
+    let defense = target.baseStats.defense; 
+    let finalDamage = 0;
 
     const negateIndex = target.baseStats.effects.indexOf('NegateNextHit');
+    let damageNegated = false;
+
     if (negateIndex !== -1) {
         log(`${target.name} Phases, negating all incoming damage!`, 'log-win');
         target.baseStats.effects.splice(negateIndex, 1); // Remove effect
+        damageNegated = true;
+    }
+    
+    // Apply Defense if damage isn't negated
+    if (damageNegated) {
         finalDamage = 0;
+    } else {
+        finalDamage = Math.max(0, damage - defense);
+
+        // NEW LOGGING: Detail the defense subtraction
+        if (defense > 0) {
+            const defenseLog = finalDamage === 0 ? "Damage blocked!" : `${finalDamage} Final Damage.`;
+            log(`[Calculation: ${ability.damageType}] Raw Power (${damage}) - ${defense} Defense = ${defenseLog}`, 'log-damage');
+        } else {
+             log(`[Calculation: ${ability.damageType}] Raw Power (${damage}). Defense is 0.`, 'log-damage');
+        }
     }
 
     target.baseStats.currentHP = Math.max(0, target.baseStats.currentHP - finalDamage);
-    log(`${attacker.name} hits for ${finalDamage} damage! (${ability.damageType})`, 'log-damage');
+    
+    // Original result line, now secondary to the calculation log
+    log(`${attacker.name} strikes with ${ability.name}! Dealt ${finalDamage} damage.`, 'log-damage');
     
     if (target.id === 'shutenmaru') {
         target.baseStats.lastDamageTaken = finalDamage; 
@@ -1268,6 +1365,11 @@ function checkGameOver() {
         log(`${gameState.enemy.name} is vanquished!`, 'log-win');
         dialogueText.textContent = "The enemy is defeated. Proceeding deeper into the dungeon...";
         
+        // Reset Striker's consecutive rounds counter after combat win
+        if (gameState.player.id === 'striker') {
+            gameState.player.baseStats.consecutive_rounds = 0;
+        }
+
         // Return to dungeon exploration view
         DungeonManager.onCombatWin();
         return true;
