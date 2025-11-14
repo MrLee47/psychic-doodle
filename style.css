@@ -34,7 +34,7 @@
     --bg-primary: #1e1e1e;
     --bg-secondary: #2c2c2c;
     --text-color: #e0e0e0;
-    --ui-color: #a0a0a0;
+    --ui-color: #7b7b7b;
     --ui-accent: #444;
     --health-color: #4CAF50;
     --health-bg-color: #444;
@@ -125,6 +125,22 @@ button:active {
     margin-bottom: 5px;
 }
 
+/* Styling for the new Settings button on the menu */
+.settings-menu-button {
+    margin-top: 20px; /* Space it out from Load Game */
+    padding: 8px 20px;
+    font-size: 1em;
+    background-color: transparent;
+    color: var(--ui-color);
+    border: 1px solid var(--ui-color);
+    box-shadow: none;
+}
+
+.settings-menu-button:hover {
+    background-color: var(--ui-color);
+    color: var(--bg-secondary);
+    transform: none;
+}
 
 /* -------------------------------------------------------------------
    3. Game UI Layout & Status Bar
@@ -146,7 +162,7 @@ button:active {
 
 #status-bar {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start; /* Align status elements to the left */
     align-items: center;
     background-color: var(--bg-primary);
     padding: 10px 20px;
@@ -184,22 +200,6 @@ button:active {
     transition: width 0.5s ease-out;
 }
 
-/* Icon Button (Settings) */
-.icon-button {
-    background: none;
-    border: none;
-    font-size: 1.5em;
-    padding: 0;
-    cursor: pointer;
-    color: var(--ui-color);
-    transition: color 0.2s;
-}
-
-.icon-button:hover {
-    color: var(--ui-accent);
-    transform: none;
-}
-
 #main-area {
     display: flex;
     flex-grow: 1;
@@ -231,7 +231,7 @@ button:active {
 
 
 /* -------------------------------------------------------------------
-   4. Settings Panel (New Top-Right Slide-out)
+   4. Settings Panel (Top-Right Slide-out)
    ------------------------------------------------------------------- */
 
 #settings-panel {
@@ -243,15 +243,15 @@ button:active {
     background-color: var(--bg-secondary);
     border-left: 2px solid var(--ui-color);
     box-shadow: -5px 0 15px var(--shadow-color);
-    z-index: 100; /* Ensure it is above the game */
-    transform: translateX(0); /* Default position is visible */
+    z-index: 100;
+    transform: translateX(100%); /* Start off-screen (hidden) */
     transition: transform 0.3s ease-in-out;
     overflow-y: auto;
     color: var(--text-color);
 }
 
-#settings-panel.hidden {
-    transform: translateX(100%); /* Slide off-screen to the right */
+#settings-panel:not(.hidden) {
+    transform: translateX(0); /* Slide into view */
 }
 
 .panel-content {
