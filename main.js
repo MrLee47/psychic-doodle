@@ -7,7 +7,7 @@
  * - Refactored Zectus's Tri-Sword attacks to work with the single dynamic button. (FIXED)
  */
 
-// --- GLOBAL GAME STATE (Local Storage is used for persistence) ---
+// --- GLOBAL GAME STATE (Local Storage is used for persi stence) ---
 let gameState = {
     isGameStarted: false,
     currentView: 'menu', // menu, select, combat
