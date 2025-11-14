@@ -101,7 +101,7 @@ export const Characters = [
             grapple_die: 8, // The die size Balter uses for defense against Grapple
         },
         uniquePassive: { 
-            name: 'The Old One-Two', 
+            name: 'Walk It Off', 
             effect: 'If Balter passes his turn, he gains 10 HP and cures 1 Status Condition.',
             type: 'PassActionHeal',
             healAmount: 10,
