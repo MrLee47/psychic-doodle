@@ -379,13 +379,13 @@ function resolveCombatRound() {
             first = gameState.enemy;
             firstAbility = enemyAbility;
             second = gameState.player;
-            secondAbility = enemyAbility;
+            secondAbility = playerAbility; // FIX: Player is second, uses player ability
         } else {
             // Speed Tie: Default to Player acting first 
             first = gameState.player;
             firstAbility = playerAbility;
             second = gameState.enemy;
-            secondAbility = enemyAbility;
+            secondAbility = playerAbility; // FIX: Player is second, uses player ability
             log(`Speed tie! ${first.name} acts first.`, 'log-special');
         }
 
@@ -470,6 +470,12 @@ function handleClash(pAbility, eAbility) {
             return; 
         }
 
+        // CRITICAL SAFETY CHECK: Ensure effects list is an array before using it in the Grapple check
+        if (!Array.isArray(gameState.enemy.baseStats.effects)) {
+             gameState.enemy.baseStats.effects = [];
+             console.warn("CRITICAL: Enemy effects array was missing, reset to [].");
+        }
+
         // CRITICAL CHECK 2: Log actual ability names
         log(`DEBUG ABILITY NAMES: P(${pAbility.name}) vs E(${eAbility.name})`, 'log-debug');
 
@@ -479,7 +485,7 @@ function handleClash(pAbility, eAbility) {
         const pDice = (typeof pAbility.dice === 'number' && pAbility.dice > 0) ? pAbility.dice : 1;
         const eDice = (typeof eAbility.dice === 'number' && eAbility.dice > 0) ? eAbility.dice : 1;
         
-        // **RE-ADDED STRIKER PASSIVE CALCULATION**
+        // **STRIKER PASSIVE CALCULATION**
         // Striker Passive (safely calculate bonus)
         const strikerBonus = (gameState.player.id === 'striker' && gameState.player.baseStats.consecutive_rounds > 0) 
             ? gameState.player.baseStats.consecutive_rounds 
@@ -506,9 +512,9 @@ function handleClash(pAbility, eAbility) {
         // 4. Calculate clash values
         const playerClashValue = BASE_CLASH_VALUE + playerRoll + playerCoinBonus;
         const enemyClashValue = BASE_CLASH_VALUE + enemyRoll + enemyCoinBonus;
-
-        log(`Clash! P Roll: ${playerRoll} (+${playerCoinBonus} coins) = ${playerClashValue} | E Roll: ${enemyRoll} (+${enemyCoinBonus} coins) = ${enemyClashValue}`);
-
+        
+        log(`DEBUG CLASH VALUES: P(${playerClashValue}) vs E(${enemyClashValue})`, 'log-debug'); 
+        
         let winner, loser, winnerAbility, winnerCoinBonus, winnerDiceRoll;
 
         // 5. Determine Winner (including Grapple check)
@@ -531,14 +537,17 @@ function handleClash(pAbility, eAbility) {
             winner = gameState.enemy;
             loser = gameState.player;
             winnerAbility = eAbility;
-            winnerCoinBonus = enemyCoinBonus; // Corrected to use enemy's rolls
-            winnerDiceRoll = enemyRoll;       // Corrected to use enemy's rolls
+            winnerCoinBonus = enemyCoinBonus; 
+            winnerDiceRoll = enemyRoll;       
         }
 
         log(`${winner.name} wins the clash!`, 'log-win');
 
         // 6. Apply Damage
         if (winnerAbility && typeof winnerAbility === 'object') {
+            // New debug log to confirm parameters before function call
+            log(`DEBUG APPLY DAMAGE PARAMS: Winner: ${winner.name}, Ability: ${winnerAbility.name}, CoinBonus: ${winnerCoinBonus}, DiceRoll: ${winnerDiceRoll}`, 'log-debug');
+
             // Pass the winner's specific roll results
             applyDamage(winnerAbility, winner, loser, winnerCoinBonus, winnerDiceRoll); 
         } else {
@@ -568,6 +577,12 @@ function handleClash(pAbility, eAbility) {
  * 4. Damage Application (called by Clash or Single Action)
  */
 function applyDamage(ability, attacker, target, coinBonus = rollCoins(ability.coins), diceRoll = rollDie(ability.dice)) {
+    // CRITICAL SAFETY CHECK: Ensure effects list is an array before using it
+    if (!Array.isArray(target.baseStats.effects)) {
+         target.baseStats.effects = [];
+         console.warn("CRITICAL: Target effects array was missing, reset to [].");
+    }
+
     // 1. Calculate base damage
     let damage = (ability.baseAttack || 0) + (coinBonus || 0); // Safety check baseAttack/coinBonus
     
