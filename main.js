@@ -360,9 +360,6 @@ function resolveCombatRound() {
         log(`Both attack! Initiating CLASH...`, 'log-special');
         handleClash(playerAbility, enemyAbility);
         
-        // This log confirms if control returned gracefully after the clash function
-        log(`DEBUG: Clash finished. Resuming combat flow...`, 'log-debug'); 
-        
         // CRITICAL FIX: Check for game over immediately after clash damage is applied
         if (checkGameOver()) return; 
     
@@ -381,7 +378,7 @@ function resolveCombatRound() {
             first = gameState.enemy;
             firstAbility = enemyAbility;
             second = gameState.player;
-            secondAbility = playerAbility;
+            secondAbility = enemyAbility;
         } else {
             // Speed Tie: Default to Player acting first 
             first = gameState.player;
@@ -495,13 +492,14 @@ function handleClash(pAbility, eAbility) {
         log(`DEBUG CLASH PARAMS: PCoins(${pCoins}) ECoins(${eCoins}) PDice(${pDice}) EDice(${eDice})`, 'log-debug'); 
 
         // 2. Calculate Clash Values
-        const playerRoll = rollDie(pDice);
-        const playerCoinBonus = rollCoins(pCoins);
-        const playerClashValue = BASE_CLASH_VALUE + playerRoll + playerCoinBonus;
+        // NOTE: Changing 'const' to 'let' here to avoid potential environment-specific scope/re-initialization bugs
+        let playerRoll = rollDie(pDice);
+        let playerCoinBonus = rollCoins(pCoins);
+        let playerClashValue = BASE_CLASH_VALUE + playerRoll + playerCoinBonus;
 
-        const enemyRoll = rollDie(eDice);
-        const enemyCoinBonus = rollCoins(eCoins);
-        const enemyClashValue = BASE_CLASH_VALUE + enemyRoll + enemyCoinBonus;
+        let enemyRoll = rollDie(eDice);
+        let enemyCoinBonus = rollCoins(eCoins);
+        let enemyClashValue = BASE_CLASH_VALUE + enemyRoll + enemyCoinBonus;
 
         // This log confirms the calculation succeeded
         log(`Clash! P Roll: ${playerRoll} (+${playerCoinBonus} coins) = ${playerClashValue} | E Roll: ${enemyRoll} (+${enemyCoinBonus} coins) = ${enemyClashValue}`);
@@ -548,6 +546,10 @@ function handleClash(pAbility, eAbility) {
             loser.baseStats.currentHP = Math.max(0, loser.baseStats.currentHP - bonusDamage);
             log(`Balter follows up with "The Old One, Two" for an extra ${bonusDamage} damage! (d${winner.uniquePassive.dice} roll: ${bonusDamageRoll})`, 'log-win');
         }
+
+        // CONFIRM SUCCESSFUL CLASH RESOLUTION
+        log(`DEBUG: Clash resolved successfully.`, 'log-debug');
+        
     } catch (error) {
         // This should now definitely catch any error if it occurs after the log in resolveCombatRound
         log(`CRITICAL CLASH ERROR: Clash resolution failed. Check console for details.`, 'log-loss');
