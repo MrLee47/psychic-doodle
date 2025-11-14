@@ -7,10 +7,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        /* UPDATED: Switched to a Cream/Black color scheme for light mode */
+        /* --- DEFAULT THEME (LIGHT MODE) --- */
+        /* The body defaults to these CSS variables */
         :root {
-            --primary-bg: #fcfcfc; /* Near White/Cream */
-            --section-bg: #ffffff; /* White/Light Cream */
+            --primary-bg: #fcfcfc; /* Cream */
+            --section-bg: #ffffff; /* White */
             --text-color: #1f2937; /* Dark Gray/Black Text */
             --accent-color: #f59e0b; /* Amber/Action */
             --hp-color: #dc2626; /* Darker Red */
@@ -19,22 +20,54 @@
             --log-win: #059669; /* Darker Green */
             --log-loss: #b91c1c; /* Dark Red */
             --log-damage: #b45309; /* Dark Orange for damage */
+            --border-color: #d1d5db;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --disabled-bg: #d1d5db;
+            --disabled-text: #6b7280;
+        }
+
+        /* --- DARK MODE OVERRIDES --- */
+        .dark-mode {
+            --primary-bg: #121212; /* Black/Deep Charcoal */
+            --section-bg: #1f2937; /* Very Dark Blue-Gray */
+            --text-color: #e5e7eb; /* Light Gray/Off-White */
+            --accent-color: #f59e0b; /* Amber (high contrast) */
+            --hp-color: #ef4444; /* Brighter Red */
+            --mp-color: #3b82f6; /* Blue */
+            --log-special: #34d399; /* Bright Green */
+            --log-win: #4ade80; /* Brighter Green */
+            --log-loss: #f87171; /* Pinkish Red */
+            --log-damage: #fcd34d; /* Light Yellow/Damage */
+            --border-color: #374151;
+            --shadow-color: rgba(0, 0, 0, 0.4);
+            --disabled-bg: #374151;
+            --disabled-text: #9ca3af;
         }
         
         body {
             background-color: var(--primary-bg);
             color: var(--text-color);
             font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s;
         }
 
         .section-box {
             background-color: var(--section-bg);
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Lighter shadow for light mode */
-            border: 1px solid #d1d5db; /* Light border */
+            box-shadow: 0 4px 6px var(--shadow-color); 
+            border: 1px solid var(--border-color);
+            transition: background-color 0.3s, box-shadow 0.3s, border-color 0.3s;
         }
 
-        /* NEW: Added position relative for the clash visualizer to work */
+        /* NEW: Center the Main Menu */
+        #menu-screen {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
         #visuals-panel {
             position: relative;
         }
@@ -47,11 +80,12 @@
         }
         
         .log-entry {
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05); /* Use generic color for log dividers */
             padding: 4px 0;
             margin: 0;
             font-size: 0.85rem;
         }
+        /* Log colors use the new theme variables */
         .log-special { color: var(--log-special); }
         .log-win { color: var(--log-win); font-weight: bold; }
         .log-loss { color: var(--log-loss); font-weight: bold; }
@@ -59,29 +93,29 @@
         
         .combat-btn, .action-btn {
             background-color: var(--accent-color);
-            color: var(--text-color); /* Ensure dark text on accent background */
+            color: #1f2937; /* Dark text on accent for max contrast */
             font-weight: bold;
             padding: 10px 15px;
             border-radius: 6px;
             transition: all 0.1s;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 4px var(--shadow-color);
             border: 1px solid #d97706; 
         }
         .combat-btn:hover:not(:disabled), .action-btn:hover:not(:disabled) {
-            background-color: #fcd34d;
+            background-color: #fbbf24; /* Brighter amber on hover */
             transform: translateY(-1px);
         }
         .combat-btn:disabled, .action-btn:disabled {
-            background-color: #d1d5db; /* Light gray for disabled */
-            color: #6b7280; /* Dark gray for disabled text */
+            background-color: var(--disabled-bg); 
+            color: var(--disabled-text); 
             cursor: not-allowed;
             box-shadow: none;
             border: none;
         }
         
-        /* Character Select Screen Styles (Retained) */
+        /* Character Select Screen Styles */
         .char-card {
-            border: 2px solid #d1d5db;
+            border: 2px solid var(--border-color);
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -90,7 +124,7 @@
         }
         .char-card.selected {
             border-color: var(--hp-color);
-            box-shadow: 0 0 8px rgba(220, 38, 38, 0.5); /* Red shadow */
+            box-shadow: 0 0 8px var(--hp-color); 
         }
         .combo-ready {
             background-color: var(--hp-color);
@@ -98,10 +132,10 @@
         }
         .active-weapon-btn {
             border: 3px solid var(--hp-color) !important;
-            box-shadow: 0 0 8px rgba(220, 38, 38, 0.5) !important;
+            box-shadow: 0 0 8px var(--hp-color) !important;
         }
 
-        /* UPDATED: Clash Visualizer Styles */
+        /* Clash Visualizer Styles */
         #clash-visualizer {
             z-index: 10;
         }
@@ -130,31 +164,36 @@
 </head>
 <body class="min-h-screen p-4 flex flex-col items-center">
 
-    <!-- SETTINGS PANEL (Hidden by default) -->
-    <div id="settings-panel" class="fixed inset-0 z-50 bg-gray-200 bg-opacity-75 backdrop-blur-sm hidden justify-center items-center">
+    <!-- SETTINGS PANEL -->
+    <div id="settings-panel" class="fixed inset-0 z-50 bg-gray-900 bg-opacity-75 backdrop-blur-sm hidden justify-center items-center">
         <div class="section-box w-11/12 md:w-1/3 p-6 space-y-4">
-            <h2 class="text-2xl font-bold">Settings</h2>
+            <h2 class="text-2xl font-bold text-accent-color">Settings</h2>
             <div class="space-y-2">
                 <p class="font-semibold">Theme Selection:</p>
                 <div class="flex space-x-2">
-                    <button data-theme="default" class="theme-option-btn action-btn px-3 py-1 text-sm">Default</button>
-                    <button data-theme="retro" class="theme-option-btn action-btn px-3 py-1 text-sm" disabled>Retro (WIP)</button>
-                    <button data-theme="light" class="theme-option-btn action-btn px-3 py-1 text-sm" disabled>Light (WIP)</button>
+                    <!-- Updated Buttons -->
+                    <button data-theme="light" class="theme-option-btn action-btn px-3 py-1 text-sm">Default (Light)</button>
+                    <button data-theme="dark" class="theme-option-btn action-btn px-3 py-1 text-sm">Dark Mode</button>
                 </div>
             </div>
             <button id="close-settings-btn" class="action-btn w-full">Close</button>
         </div>
     </div>
 
-    <!-- MAIN MENU SCREEN -->
-    <div id="menu-screen" class="flex flex-col items-center justify-center space-y-6 hidden min-h-screen">
-        <h1 class="text-5xl font-bold mb-8 text-accent-color">Chronicles of Heroes</h1>
-        <button id="new-game-btn" class="action-btn w-64">New Game</button>
-        <button id="load-game-btn" class="action-btn w-64" disabled>Load Game (WIP)</button>
-        <button id="open-settings-menu-btn" class="action-btn w-64">Settings</button>
+    <!-- MAIN MENU SCREEN (Updated Centered Layout) -->
+    <div id="menu-screen" class="space-y-6">
+        <h1 class="text-6xl font-black mb-12 text-accent-color text-center tracking-wider">
+            Chronicles of Heroes
+        </h1>
+        <div class="flex flex-col items-center space-y-4 w-72 mx-auto">
+            <button id="new-game-btn" class="action-btn w-full text-xl">New Game</button>
+            <button id="load-game-btn" class="action-btn w-full text-xl" disabled>Load Game (WIP)</button>
+            <div class="w-full h-px bg-gray-500 my-2"></div>
+            <button id="open-settings-menu-btn" class="action-btn w-full text-lg">Settings</button>
+        </div>
     </div>
 
-    <!-- CHARACTER SELECT SCREEN (UI Retained) -->
+    <!-- CHARACTER SELECT SCREEN -->
     <div id="character-select-screen" class="hidden w-full max-w-4xl">
         <h2 class="text-3xl font-bold mb-6 text-center text-accent-color">Select Your Hero</h2>
         <div id="character-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -165,7 +204,7 @@
         </div>
     </div>
 
-    <!-- MAIN GAME CONTAINER WRAPPER - UPDATED GRID LAYOUT (cols-5) -->
+    <!-- MAIN GAME CONTAINER WRAPPER -->
     <div id="main-game-wrapper" class="hidden w-full max-w-7xl px-4 mt-8 grid grid-cols-1 lg:grid-cols-5 gap-6">
 
         <!-- VISUALS PANEL (Left Column - 40% width on desktop) -->
@@ -186,7 +225,7 @@
             </div>
             <p id="visual-context" class="text-sm italic text-gray-400 mt-4">Current Room: Ready to fight.</p>
 
-            <!-- NEW: CLASH VISUALIZER (Starts hidden) -->
+            <!-- CLASH VISUALIZER -->
             <div id="clash-visualizer" class="absolute inset-0 bg-gray-900 bg-opacity-75 backdrop-blur-sm hidden flex-col justify-center items-center text-white p-4 rounded-lg">
                 <!-- Content injected by JS during clash -->
             </div>
@@ -221,7 +260,7 @@
                 </div>
             </div>
 
-            <!-- UPDATED: ROOM INFO CARD (SEPARATED FROM DIALOGUE) -->
+            <!-- ROOM INFO CARD -->
             <div id="room-info-card" class="section-box p-4 flex justify-between font-semibold border-b border-gray-300 pb-2">
                 <span id="area-display" class="text-accent-color">Area: Erebos</span>
                 <span id="room-progress-display" class="text-gray-600">Room 1/6</span>
@@ -233,7 +272,6 @@
             </div>
 
             <!-- COMBAT LOG (Smart Scrolling Implemented) -->
-            <!-- ADDED ID FOR SCROLL MANAGEMENT: log-scroll-container -->
             <div id="log-scroll-container" class="section-box p-4 h-[400px] overflow-y-auto">
                 <h3 class="text-xl font-bold border-b border-gray-300 pb-2 mb-2 text-text-color">Event Log</h3>
                 <div id="combat-log" class="space-y-1">
@@ -250,7 +288,7 @@
                 <button id="pass-turn-btn" class="action-btn w-full hidden">Pass Turn</button>
             </div>
             
-            <!-- INVENTORY AND ABILITIES (KEPT AS SIMPLE STACKED BLOCKS) -->
+            <!-- INVENTORY AND ABILITIES -->
             <div id="inventory-display" class="section-box p-4 flex flex-col md:flex-row gap-6 mt-6">
                 <div class="w-full md:w-1/2">
                     <h4 class="text-xl font-semibold border-b border-gray-300 pb-2 mb-2 text-accent-color">Inventory</h4>
@@ -321,18 +359,7 @@ const ENEMY_TEMPLATES = {
     }
 };
 
-// ITEM TEMPLATES (No longer used, but kept for future reference)
-const ITEM_TEMPLATES = {
-    'healing_potion': { 
-        id: 'healing_potion', 
-        name: 'Healing Potion', 
-        type: 'Consumable', 
-        description: 'Restores 25 HP.', 
-        effect: { type: 'Heal', value: 25 } 
-    }
-};
-
-// AREA DATA (Dungeon Definitions) - FIXED: Only Combat rooms for easy testing
+// AREA DATA (Dungeon Definitions)
 const AREA_DATA = {
     'erebos': {
         name: 'Erebos',
@@ -349,7 +376,7 @@ const AREA_DATA = {
     }
 };
 
-// Player Characters (Re-used from previous iterations)
+// Player Characters
 const CHARACTERS = [
     // --- 1. Striker (Speed 4: Fastest) ---
     {
@@ -360,7 +387,6 @@ const CHARACTERS = [
         uniquePassive: { name: 'Slow Start', type: 'CoinScaler' },
         abilities: [
             { name: 'Dragon Strike', type: 'ATTACK', damageType: 'Force', baseAttack: 4, dice: 4, coins: 2, },
-            // UPDATED: Added selfStagger: true to ensure Striker staggers himself.
             { name: 'Heavy Blow', type: 'ATTACK', damageType: 'Force', baseAttack: 10, dice: 12, coins: 0, selfStagger: true, cost: 10 }, 
         ]
     },
@@ -382,8 +408,7 @@ const CHARACTERS = [
         name: 'Balter',
         description: 'A wrestling powerhouse who controls the battlefield.',
         baseStats: { maxHP: 130, defense: 3, level: 1, currentHP: 130, status: 'Alive', isGrappling: false, grapple_die: 8, effects: [], speed: 1, gender: 'Male' },
-        // FIX: Increased passive dice from 4 to 10 for more noticeable bonus damage.
-        uniquePassive: { name: 'The Old One-Two', type: 'ClashWinBonus', dice: 10 }, 
+        uniquePassive: { name: 'The Old One, Two', type: 'ClashWinBonus', dice: 10 }, 
         abilities: [
             { name: 'Haymaker', type: 'ATTACK', damageType: 'Physical', baseAttack: 7, dice: 10, coins: 1, },
             { name: 'Grapple', type: 'SPECIAL', effect: 'Rolls d10 vs. target\'s Grapple Die. Success applies Grappled status. Target auto-loses next clash.', statusApplied: 'Grappled', baseAttack: 0, dice: 10, coins: 0, targetGrappleDie: 8 },
@@ -410,7 +435,6 @@ const CHARACTERS = [
 // --- DOM REFERENCES ---
 const menuScreen = document.getElementById('menu-screen');
 const mainGameWrapper = document.getElementById('main-game-wrapper'); // NEW
-const gameContainer = document.getElementById('game-container');
 const charSelectScreen = document.getElementById('character-select-screen');
 
 // Menu Buttons
@@ -426,7 +450,7 @@ const themeOptionBtns = document.querySelectorAll('.theme-option-btn');
 const dialogueText = document.getElementById('dialogue-text');
 const actionButtonsDiv = document.getElementById('action-buttons');
 const combatLog = document.getElementById('combat-log');
-// NEW: Reference to the scrollable container
+// Reference to the scrollable container
 const logScrollContainer = document.getElementById('log-scroll-container'); 
 
 const passTurnBtn = document.getElementById('pass-turn-btn'); 
@@ -438,7 +462,7 @@ const playerSpriteName = document.getElementById('player-sprite-name');
 const enemySpriteName = document.getElementById('enemy-sprite-name');
 
 // Combat Visualizer
-const clashVisualizer = document.getElementById('clash-visualizer'); // NEW
+const clashVisualizer = document.getElementById('clash-visualizer'); 
 const clashDiceSlotId = 'clash-dice-slot';
 const clashCoinSlotId = 'clash-coin-slot';
 
@@ -529,7 +553,7 @@ function updateHealthDisplay(entity, ui) {
 }
 
 /**
- * UPDATED: Log function now appends to the bottom and scrolls down only if the user is at the bottom.
+ * Log function now appends to the bottom and scrolls down only if the user is at the bottom.
  */
 function log(message, className = '') {
     // Check if the user is currently scrolled to the bottom (with a small tolerance)
@@ -554,7 +578,7 @@ function log(message, className = '') {
 }
 
 /**
- * NEW: Function to simulate a slot machine spin for dice/coins.
+ * Function to simulate a slot machine spin for dice/coins.
  */
 function runSlotAnimation(elementId, maxVal, isCoin) {
     const slotElement = document.getElementById(elementId);
@@ -562,7 +586,6 @@ function runSlotAnimation(elementId, maxVal, isCoin) {
 
     let interval;
     const animationStart = performance.now();
-    // Spin duration increased from 2000ms to 3000ms
     const duration = 3000; 
 
     const spin = () => {
@@ -587,7 +610,7 @@ function runSlotAnimation(elementId, maxVal, isCoin) {
 }
 
 /**
- * UPDATED: Displays a visual overlay for the clash, waiting for a fixed duration.
+ * Displays a visual overlay for the clash, waiting for a fixed duration.
  */
 function startClashVisuals(pDiceMax, pCoins, eDiceMax, eCoins, pFinalRoll, pFinalCoin, eFinalRoll, eFinalCoin) {
     return new Promise(resolve => {
@@ -630,7 +653,7 @@ function startClashVisuals(pDiceMax, pCoins, eDiceMax, eCoins, pFinalRoll, pFina
         const eCoinInterval = runSlotAnimation(`e-${clashCoinSlotId}`, eCoins, true);
 
 
-        // 2. Wait for 3 seconds (increased), then stop and display final results
+        // 2. Wait for 3 seconds, then stop and display final results
         setTimeout(() => {
             clearInterval(pDiceInterval);
             clearInterval(eDiceInterval);
@@ -646,22 +669,27 @@ function startClashVisuals(pDiceMax, pCoins, eDiceMax, eCoins, pFinalRoll, pFina
             // Update context
             clashVisualizer.querySelector('p.mt-8').textContent = 'Results are in! (Closing in 1s)';
 
-            // 3. Wait 1 second (increased) for final result display before returning
+            // 3. Wait 1 second for final result display before returning
             setTimeout(() => {
                 clashVisualizer.classList.add('hidden');
                 clashVisualizer.classList.remove('flex');
                 resolve();
-            }, 1000); // Total animation time is 4.0 seconds (3s spin + 1s pause)
+            }, 1000); 
 
         }, 3000); 
     });
 }
 
-// --- THEME & SETTINGS LOGIC (Simplified) ---
+// --- THEME & SETTINGS LOGIC (Updated) ---
 
 function applyTheme(themeName) {
-    // Currently only supporting default theme
-    localStorage.setItem('gameTheme', 'default');
+    if (themeName === 'dark') {
+        document.body.classList.add('dark-mode');
+        localStorage.setItem('gameTheme', 'dark');
+    } else {
+        document.body.classList.remove('dark-mode');
+        localStorage.setItem('gameTheme', 'light');
+    }
 }
 
 function toggleSettingsPanel() {
@@ -1465,20 +1493,21 @@ function renderCombatActions() {
 // --- INITIALIZATION ---
 
 function init() {
-    // Since themes were disabled, enforce default theme
-    applyTheme('default'); 
+    // Apply theme from local storage, OR default to 'light' (as requested)
+    const savedTheme = localStorage.getItem('gameTheme') || 'light';
+    applyTheme(savedTheme); 
 
+    // Add event listeners to theme buttons
+    themeOptionBtns.forEach(btn => {
+        btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+    });
+    
     setView('menu'); 
 
     newGameBtn.addEventListener('click', () => setView('select'));
 
     openSettingsBtn.addEventListener('click', toggleSettingsPanel);
     closeSettingsBtn.addEventListener('click', toggleSettingsPanel);
-    
-    // Theme selection logic (currently disabled for simplicity)
-    themeOptionBtns.forEach(btn => {
-        btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
-    });
 }
 
 window.onload = init;
