@@ -242,25 +242,49 @@ function renderCharacterSelection() {
 // --- GAME STARTUP ---
 
 function startNewGame(charId) {
-    // 1. Initialize Player and Enemy
     const selectedCharData = CHARACTERS.find(c => c.id === charId);
-    gameState.player = JSON.parse(JSON.stringify(selectedCharData)); 
-    gameState.enemy = JSON.parse(JSON.stringify(ENEMY_GOBLIN)); 
+    
+    // Define a base template with all possible unique/dynamic stats
+    const commonBaseStats = {
+        maxHP: 100, currentHP: 100, defense: 0, level: 1, status: 'Alive', speed: 0, 
+        consecutive_rounds: 0, 
+        isGrappling: false, 
+        grapple_die: 8, 
+        lastDamageTaken: 0, // Used by Shuten-Maru
+        tri_sword_state: 'Scythe', // Used by Zectus Maximus
+        effects: [], 
+        gender: 'Male', // Used by Zectus Maximus
+    };
 
-    // 2. Reset Game State
+    // 1. Initialize Player: Deep copy and merge character data with full base stats
+    gameState.player = JSON.parse(JSON.stringify(selectedCharData)); 
+    gameState.player.baseStats = { 
+        ...commonBaseStats, 
+        ...gameState.player.baseStats,
+        // Ensure HP values are preserved from the original data
+        currentHP: gameState.player.baseStats.maxHP
+    };
+
+    // 2. Initialize Enemy: Deep copy and merge enemy data with full base stats
+    gameState.enemy = JSON.parse(JSON.stringify(ENEMY_GOBLIN));
+    gameState.enemy.baseStats = { 
+        ...commonBaseStats, 
+        ...gameState.enemy.baseStats,
+        // Ensure HP values are preserved from the original data
+        currentHP: gameState.enemy.baseStats.maxHP
+    };
+
+    // 3. Reset Game State
     gameState.turn = 1;
-    gameState.player.baseStats.currentHP = gameState.player.baseStats.maxHP;
-    gameState.enemy.baseStats.currentHP = gameState.enemy.baseStats.maxHP;
-    gameState.player.baseStats.consecutive_rounds = 0; 
     gameState.playerAction = null;
     gameState.enemyAction = null;
 
 
-    // 3. Clear UI
+    // 4. Clear UI
     combatLog.innerHTML = '';
     dialogueText.textContent = `A powerful champion, ${gameState.player.name}, steps forward!`;
 
-    // 4. Start Combat
+    // 5. Start Combat
     setView('combat');
     log(`${gameState.enemy.name} challenges ${gameState.player.name}!`, 'log-special');
     updateCombatUI();
@@ -379,13 +403,13 @@ function resolveCombatRound() {
             first = gameState.enemy;
             firstAbility = enemyAbility;
             second = gameState.player;
-            secondAbility = playerAbility; // FIX: Player is second, uses player ability
+            secondAbility = playerAbility; 
         } else {
             // Speed Tie: Default to Player acting first 
             first = gameState.player;
             firstAbility = playerAbility;
             second = gameState.enemy;
-            secondAbility = playerAbility; // FIX: Player is second, uses player ability
+            secondAbility = enemyAbility; // FIX: Enemy uses its own chosen ability (enemyAction)
             log(`Speed tie! ${first.name} acts first.`, 'log-special');
         }
 
@@ -416,6 +440,8 @@ function executeSingleAction(attacker, ability, target) {
 
     if (ability.type === 'DEFENSE') {
         if (ability.defenseEffect === 'NegateNextHit') {
+            // Safety check for effects array
+            if (!Array.isArray(target.baseStats.effects)) { target.baseStats.effects = []; }
             target.baseStats.effects.push('NegateNextHit');
         } else {
              // Add other defense buffs (e.g., temporary defense boost)
@@ -430,6 +456,8 @@ function executeSingleAction(attacker, ability, target) {
             const targetRoll = rollDie(targetGrappleDie);
             
             if (attackerRoll > targetRoll) {
+                // Safety check for effects array
+                if (!Array.isArray(target.baseStats.effects)) { target.baseStats.effects = []; }
                 target.baseStats.effects.push('Grappled');
                 log(`${attacker.name} successfully grapples ${target.name}! ${target.name} auto-loses the next clash.`, 'log-win');
                 attacker.baseStats.isGrappling = true;
@@ -487,6 +515,7 @@ function handleClash(pAbility, eAbility) {
         
         // **STRIKER PASSIVE CALCULATION**
         // Striker Passive (safely calculate bonus)
+        // Accessing consecutive_rounds is now safe due to full initialization in startNewGame
         const strikerBonus = (gameState.player.id === 'striker' && gameState.player.baseStats.consecutive_rounds > 0) 
             ? gameState.player.baseStats.consecutive_rounds 
             : 0;
@@ -603,12 +632,14 @@ function applyDamage(ability, attacker, target, coinBonus = rollCoins(ability.co
     
     // 5. Update last damage taken for Chrono-Fist
     if (target.id === 'shutenmaru') {
-        target.baseStats.lastDamageTaken = finalDamage;
+        // Accessing lastDamageTaken is now safe due to startNewGame initialization
+        target.baseStats.lastDamageTaken = finalDamage; 
     }
     
     // 6. Apply Chrono-Fist (Shuten-Maru Passive Check)
     if (attacker.id === 'shutenmaru' && attacker.uniquePassive.type === 'RollTrigger' && diceRoll === attacker.uniquePassive.triggerValue) {
-        const healAmount = attacker.baseStats.lastDamageTaken;
+        // Accessing lastDamageTaken is now safe due to startNewGame initialization
+        const healAmount = target.baseStats.lastDamageTaken; 
         attacker.baseStats.currentHP = Math.min(attacker.baseStats.maxHP, attacker.baseStats.currentHP + healAmount);
         log(`Chrono-Fist triggered! Shuten-Maru heals back ${healAmount} damage.`, 'log-win');
     }
@@ -617,6 +648,7 @@ function applyDamage(ability, attacker, target, coinBonus = rollCoins(ability.co
     if (ability.name === 'Piledriver' && ability.removesTargetStatus === 'Grappled') {
         target.baseStats.effects = target.baseStats.effects.filter(e => e !== 'Grappled');
         log(`${target.name} is released from the grapple.`, 'log-special');
+        // Accessing isGrappling is now safe due to startNewGame initialization
         attacker.baseStats.isGrappling = false;
     }
 }
@@ -628,6 +660,7 @@ function applyDamage(ability, attacker, target, coinBonus = rollCoins(ability.co
 function endTurnCleanup() {
     // Striker: Increase consecutive rounds
     if (gameState.player.id === 'striker') {
+        // Accessing consecutive_rounds is now safe due to startNewGame initialization
         gameState.player.baseStats.consecutive_rounds++;
     }
 
@@ -676,7 +709,7 @@ function checkGameOver() {
 function renderCombatActions() {
     actionButtonsDiv.innerHTML = '';
     const playerAbilities = gameState.player.abilities;
-    const isGrappling = gameState.enemy.baseStats.effects.includes('Grappled'); // Check enemy status for Grappled
+    const isGrappling = gameState.gameState.enemy.baseStats.effects.includes('Grappled'); // Check enemy status for Grappled
     const currentWeapon = gameState.player.baseStats.tri_sword_state; 
 
     playerAbilities.forEach(ability => {
