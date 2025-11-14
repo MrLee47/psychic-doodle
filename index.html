@@ -7,18 +7,18 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* Reverted to high-contrast, simple style for clarity, matching the request for a simple, stacked UI */
+        /* UPDATED: Switched to a Cream/Black color scheme for light mode */
         :root {
-            --primary-bg: #111827; /* Deep Blue/Black */
-            --section-bg: #1f2937; /* Dark Gray */
-            --text-color: #f3f4f6; /* Light Gray */
+            --primary-bg: #fcfcfc; /* Near White/Cream */
+            --section-bg: #ffffff; /* White/Light Cream */
+            --text-color: #1f2937; /* Dark Gray/Black Text */
             --accent-color: #f59e0b; /* Amber/Action */
-            --hp-color: #ef4444; /* Red */
+            --hp-color: #dc2626; /* Darker Red */
             --mp-color: #3b82f6; /* Blue */
-            --log-special: #a7f3d0; /* Green highlight */
-            --log-win: #34d399; /* Green */
-            --log-loss: #f87171; /* Light Red */
-            --log-damage: #fcd34d; /* Yellow */
+            --log-special: #047857; /* Darker Green highlight */
+            --log-win: #059669; /* Darker Green */
+            --log-loss: #b91c1c; /* Dark Red */
+            --log-damage: #b45309; /* Dark Orange for damage */
         }
         
         body {
@@ -30,8 +30,8 @@
         .section-box {
             background-color: var(--section-bg);
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            border: 1px solid #374151;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Lighter shadow for light mode */
+            border: 1px solid #d1d5db; /* Light border */
         }
 
         .hp-bar-inner {
@@ -42,7 +42,7 @@
         }
         
         .log-entry {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
             padding: 4px 0;
             margin: 0;
             font-size: 0.85rem;
@@ -54,27 +54,29 @@
         
         .combat-btn, .action-btn {
             background-color: var(--accent-color);
-            color: var(--primary-bg);
+            color: var(--text-color); /* Ensure dark text on accent background */
             font-weight: bold;
             padding: 10px 15px;
             border-radius: 6px;
             transition: all 0.1s;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            border: 1px solid #d97706; 
         }
         .combat-btn:hover:not(:disabled), .action-btn:hover:not(:disabled) {
             background-color: #fcd34d;
             transform: translateY(-1px);
         }
         .combat-btn:disabled, .action-btn:disabled {
-            background-color: #6b7280;
-            color: #d1d5db;
+            background-color: #d1d5db; /* Light gray for disabled */
+            color: #6b7280; /* Dark gray for disabled text */
             cursor: not-allowed;
             box-shadow: none;
+            border: none;
         }
         
         /* Character Select Screen Styles (Retained) */
         .char-card {
-            border: 2px solid var(--section-bg);
+            border: 2px solid #d1d5db;
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -83,7 +85,7 @@
         }
         .char-card.selected {
             border-color: var(--hp-color);
-            box-shadow: 0 0 8px var(--hp-color);
+            box-shadow: 0 0 8px rgba(220, 38, 38, 0.5); /* Red shadow */
         }
         .combo-ready {
             background-color: var(--hp-color);
@@ -91,14 +93,14 @@
         }
         .active-weapon-btn {
             border: 3px solid var(--hp-color) !important;
-            box-shadow: 0 0 8px var(--hp-color) !important;
+            box-shadow: 0 0 8px rgba(220, 38, 38, 0.5) !important;
         }
     </style>
 </head>
 <body class="min-h-screen p-4 flex flex-col items-center">
 
     <!-- SETTINGS PANEL (Hidden by default) -->
-    <div id="settings-panel" class="fixed inset-0 z-50 bg-gray-900 bg-opacity-75 backdrop-blur-sm hidden justify-center items-center">
+    <div id="settings-panel" class="fixed inset-0 z-50 bg-gray-200 bg-opacity-75 backdrop-blur-sm hidden justify-center items-center">
         <div class="section-box w-11/12 md:w-1/3 p-6 space-y-4">
             <h2 class="text-2xl font-bold">Settings</h2>
             <div class="space-y-2">
@@ -132,78 +134,101 @@
         </div>
     </div>
 
-    <!-- MAIN GAME CONTAINER (Combat & Dungeon Views) - REVERTED UI -->
-    <div id="game-container" class="hidden w-full max-w-2xl space-y-6">
+    <!-- MAIN GAME CONTAINER WRAPPER - NEW GRID LAYOUT -->
+    <div id="main-game-wrapper" class="hidden w-full max-w-7xl px-4 mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <!-- STATUS BARS & HEADER -->
-        <div id="status-bars" class="space-y-4">
-            <!-- Player Status -->
-            <div id="player-status-card" class="section-box p-4 space-y-2">
-                <h3 id="player-name" class="text-xl font-bold text-accent-color">Player Name</h3>
-                <div class="h-5 bg-gray-600 rounded-full">
-                    <div id="player-hp-bar" class="hp-bar-inner" style="width: 100%;"></div>
-                </div>
-                <div class="flex justify-between text-sm">
-                    <span id="player-hp-text">100/100</span>
-                    <span id="player-status-text" class="text-white">Alive</span>
-                </div>
-            </div>
-            <!-- Enemy Status (Hidden when not in combat) -->
-            <div id="enemy-status-card" class="section-box p-4 space-y-2 hidden">
-                <h3 id="enemy-name" class="text-xl font-bold text-red-400 text-right">Enemy Name</h3>
-                <div class="h-5 bg-gray-600 rounded-full">
-                    <div id="enemy-hp-bar" class="hp-bar-inner" style="width: 100%;"></div>
-                </div>
-                <div class="flex justify-between text-sm">
-                    <span id="enemy-status-text" class="text-white">Alive</span>
-                    <span id="enemy-hp-text">100/100</span>
+        <!-- VISUALS PANEL (Left/Center Column on Desktop) -->
+        <div id="visuals-panel" class="section-box lg:col-span-2 p-4 flex flex-col items-center justify-center min-h-[300px] lg:min-h-[600px] space-y-4">
+            <h2 class="text-3xl font-bold text-accent-color">Combat View</h2>
+            <div id="animation-slot" class="text-4xl text-gray-400">
+                <!-- Placeholder for Player/Enemy sprites or animations -->
+                <div class="flex space-x-12">
+                    <div id="player-sprite" class="text-center">
+                        <span class="text-7xl">🛡️</span>
+                        <p class="text-xl font-bold mt-2">Hero</p>
+                    </div>
+                    <div id="enemy-sprite" class="text-center">
+                        <span class="text-7xl">👹</span>
+                        <p class="text-xl font-bold mt-2">Enemy</p>
+                    </div>
                 </div>
             </div>
+            <p id="visual-context" class="text-sm italic text-gray-400 mt-4">Current Room: Ready to fight.</p>
         </div>
 
-        <!-- DIALOGUE & ROOM INFO -->
-        <div class="section-box p-4">
-            <div id="room-info" class="text-lg font-semibold mb-2 flex justify-between border-b border-gray-600 pb-2">
-                <span id="area-display" class="text-accent-color">Area: Erebos</span>
-                <span id="room-progress-display" class="text-gray-400">Room 1/6</span>
-            </div>
-            <p id="dialogue-text" class="text-lg italic mt-2">Welcome to the adventure!</p>
-        </div>
+        <!-- GAME UI COLUMN (Right Column on Desktop) -->
+        <div id="game-container" class="w-full space-y-6 lg:col-span-1">
 
-        <!-- COMBAT LOG -->
-        <div class="section-box p-4 h-64 overflow-y-auto flex flex-col-reverse">
-            <h3 class="text-xl font-bold border-b border-gray-600 pb-2 mb-2 text-white">Event Log</h3>
-            <div id="combat-log" class="space-y-1">
-                <!-- Combat/Dungeon Log Entries Here -->
+            <!-- STATUS BARS & HEADER -->
+            <div id="status-bars" class="space-y-4">
+                <!-- Player Status -->
+                <div id="player-status-card" class="section-box p-4 space-y-2">
+                    <h3 id="player-name" class="text-xl font-bold text-accent-color">Player Name</h3>
+                    <div class="h-5 bg-gray-300 rounded-full">
+                        <div id="player-hp-bar" class="hp-bar-inner" style="width: 100%;"></div>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span id="player-hp-text">100/100</span>
+                        <span id="player-status-text">Alive</span>
+                    </div>
+                </div>
+                <!-- Enemy Status (Hidden when not in combat) -->
+                <div id="enemy-status-card" class="section-box p-4 space-y-2 hidden">
+                    <h3 id="enemy-name" class="text-xl font-bold text-red-600 text-right">Enemy Name</h3>
+                    <div class="h-5 bg-gray-300 rounded-full">
+                        <div id="enemy-hp-bar" class="hp-bar-inner" style="width: 100%;"></div>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span id="enemy-status-text">Alive</span>
+                        <span id="enemy-hp-text">100/100</span>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <!-- ACTIONS / DUNGEON INTERACTION -->
-        <div class="section-box p-4 space-y-4">
-            <h3 id="action-header" class="text-2xl font-bold text-accent-color border-b border-gray-600 pb-2">Actions</h3>
-            <div id="action-buttons" class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <!-- Action/Combat Buttons Render Here -->
+            <!-- DIALOGUE & ROOM INFO -->
+            <div class="section-box p-4">
+                <div id="room-info" class="text-lg font-semibold mb-2 flex justify-between border-b border-gray-300 pb-2">
+                    <span id="area-display" class="text-accent-color">Area: Erebos</span>
+                    <span id="room-progress-display" class="text-gray-600">Room 1/6</span>
+                </div>
+                <p id="dialogue-text" class="text-lg italic mt-2">Welcome to the adventure!</p>
             </div>
-            <button id="pass-turn-btn" class="action-btn w-full hidden">Pass Turn</button>
-        </div>
-        
-        <!-- INVENTORY AND ABILITIES (KEPT AS SIMPLE STACKED BLOCKS) -->
-        <div id="inventory-display" class="section-box p-4 flex flex-col md:flex-row gap-6 mt-6">
-            <div class="w-full md:w-1/2">
-                <h4 class="text-xl font-semibold border-b border-gray-600 pb-2 mb-2 text-accent-color">Inventory</h4>
-                <ul id="inventory-list" class="text-sm space-y-1">
-                    <li class="text-gray-400">No items found yet.</li>
-                </ul>
-            </div>
-            <div class="w-full md:w-1/2">
-                <h4 class="text-xl font-semibold border-b border-gray-600 pb-2 mb-2 text-accent-color">Abilities</h4>
-                <ul id="ability-list" class="text-sm space-y-1">
-                    <!-- Base abilities load here, new ones get added -->
-                </ul>
-            </div>
-        </div>
 
-    </div>
+            <!-- COMBAT LOG -->
+            <div class="section-box p-4 h-64 overflow-y-auto flex flex-col-reverse">
+                <h3 class="text-xl font-bold border-b border-gray-300 pb-2 mb-2 text-text-color">Event Log</h3>
+                <div id="combat-log" class="space-y-1">
+                    <!-- Combat/Dungeon Log Entries Here -->
+                </div>
+            </div>
+
+            <!-- ACTIONS / DUNGEON INTERACTION -->
+            <div class="section-box p-4 space-y-4">
+                <h3 id="action-header" class="text-2xl font-bold text-accent-color border-b border-gray-300 pb-2">Actions</h3>
+                <div id="action-buttons" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <!-- Action/Combat Buttons Render Here -->
+                </div>
+                <button id="pass-turn-btn" class="action-btn w-full hidden">Pass Turn</button>
+            </div>
+            
+            <!-- INVENTORY AND ABILITIES (KEPT AS SIMPLE STACKED BLOCKS) -->
+            <div id="inventory-display" class="section-box p-4 flex flex-col md:flex-row gap-6 mt-6">
+                <div class="w-full md:w-1/2">
+                    <h4 class="text-xl font-semibold border-b border-gray-300 pb-2 mb-2 text-accent-color">Inventory</h4>
+                    <ul id="inventory-list" class="text-sm space-y-1">
+                        <li class="text-gray-600">No items found yet.</li>
+                    </ul>
+                </div>
+                <div class="w-full md:w-1/2">
+                    <h4 class="text-xl font-semibold border-b border-gray-300 pb-2 mb-2 text-accent-color">Abilities</h4>
+                    <ul id="ability-list" class="text-sm space-y-1">
+                        <!-- Base abilities load here, new ones get added -->
+                    </ul>
+                </div>
+            </div>
+
+        </div> <!-- End game-container -->
+    </div> <!-- End main-game-wrapper -->
 
     <!-- JAVASCRIPT LOGIC -->
     <script type="text/javascript">
@@ -296,7 +321,8 @@ const CHARACTERS = [
         uniquePassive: { name: 'Slow Start', type: 'CoinScaler' },
         abilities: [
             { name: 'Dragon Strike', type: 'ATTACK', damageType: 'Force', baseAttack: 4, dice: 4, coins: 2, },
-            { name: 'Heavy Blow', type: 'ATTACK', damageType: 'Force', baseAttack: 10, dice: 12, coins: 0, statusEffect: 'Stagger', cost: 10 }, 
+            // UPDATED: Added selfStagger: true to ensure Striker staggers himself.
+            { name: 'Heavy Blow', type: 'ATTACK', damageType: 'Force', baseAttack: 10, dice: 12, coins: 0, selfStagger: true, cost: 10 }, 
         ]
     },
     // --- 2. Shuten-Maru (Speed 3) ---
@@ -343,6 +369,7 @@ const CHARACTERS = [
 
 // --- DOM REFERENCES ---
 const menuScreen = document.getElementById('menu-screen');
+const mainGameWrapper = document.getElementById('main-game-wrapper'); // NEW
 const gameContainer = document.getElementById('game-container');
 const charSelectScreen = document.getElementById('character-select-screen');
 
@@ -361,6 +388,9 @@ const actionButtonsDiv = document.getElementById('action-buttons');
 const combatLog = document.getElementById('combat-log');
 const passTurnBtn = document.getElementById('pass-turn-btn'); 
 const actionHeader = document.getElementById('action-header');
+const visualContext = document.getElementById('visual-context'); // NEW
+const playerSprite = document.getElementById('player-sprite'); // NEW
+const enemySprite = document.getElementById('enemy-sprite'); // NEW
 
 // Dungeon UI
 const areaDisplay = document.getElementById('area-display');
@@ -476,7 +506,7 @@ function toggleSettingsPanel() {
 function setView(viewName) {
     gameState.currentView = viewName;
     menuScreen.classList.add('hidden');
-    gameContainer.classList.add('hidden');
+    mainGameWrapper.classList.add('hidden'); // Use wrapper for grid layout
     charSelectScreen.classList.add('hidden');
     
     // Manage Status Bar Visibility
@@ -489,11 +519,11 @@ function setView(viewName) {
         charSelectScreen.classList.remove('hidden');
         renderCharacterSelection();
     } else if (viewName === 'dungeon') {
-        gameContainer.classList.remove('hidden');
+        mainGameWrapper.classList.remove('hidden');
         DungeonManager.renderDungeonActions();
         updateCombatUI(); 
     } else if (viewName === 'combat') {
-        gameContainer.classList.remove('hidden');
+        mainGameWrapper.classList.remove('hidden');
         enemyStatusCard.classList.remove('hidden');
         actionHeader.textContent = 'Combat Actions';
         renderCombatActions();
@@ -580,8 +610,12 @@ function updateCombatUI() {
         updateHealthDisplay(gameState.enemy, enemyStatus);
         enemyStatus.name.textContent = gameState.enemy.name;
         enemyStatusCard.classList.remove('hidden');
+        visualContext.textContent = `VS ${gameState.enemy.name} | Turn ${gameState.turn}`;
+        enemySprite.classList.remove('hidden');
     } else {
         enemyStatusCard.classList.add('hidden');
+        visualContext.textContent = `In the dungeon: Room ${gameState.dungeonState.roomsCleared + 1}`;
+        enemySprite.classList.add('hidden');
     }
     
     // Dungeon progress update
@@ -603,7 +637,7 @@ function renderInventoryAndAbilities() {
     // Render Inventory
     inventoryList.innerHTML = '';
     if (gameState.dungeonState.inventory.length === 0) {
-        inventoryList.innerHTML = '<li class="text-gray-400">No items found yet.</li>';
+        inventoryList.innerHTML = '<li class="text-gray-600">No items found yet.</li>';
     } else {
         gameState.dungeonState.inventory.forEach(item => {
             const li = document.createElement('li');
@@ -951,6 +985,13 @@ function executeSingleAction(attacker, ability, target) {
             log(`${target.name} is **Staggered** and will skip their next turn!`, 'log-loss');
         }
     }
+    
+    // Check for **Self-Stagger** after action (specifically for Striker's Heavy Blow)
+    if (ability.selfStagger) {
+        if (!Array.isArray(attacker.baseStats.effects)) { attacker.baseStats.effects = []; }
+        attacker.baseStats.effects.push('Stagger');
+        log(`${attacker.name} used a powerful move and is now **Staggered**!`, 'log-loss');
+    }
 }
 
 
@@ -1041,11 +1082,18 @@ function handleClash(pAbility, eAbility) {
             log(`Balter follows up with "The Old One, Two" for an extra ${bonusDamage} damage! (d${winner.uniquePassive.dice} roll: ${bonusDamageRoll})`, 'log-win');
         }
         
-        // 8. Apply Stagger
+        // 8. Apply Stagger to LOSER
         if (winnerAbility.statusEffect === 'Stagger') {
             if (!Array.isArray(loser.baseStats.effects)) { loser.baseStats.effects = []; }
             loser.baseStats.effects.push('Stagger');
             log(`${loser.name} is **Staggered** and will skip their next turn!`, 'log-loss');
+        }
+        
+        // 9. Apply **Self-Stagger** to WINNER (Striker's Heavy Blow)
+        if (winnerAbility.selfStagger) {
+            if (!Array.isArray(winner.baseStats.effects)) { winner.baseStats.effects = []; }
+            winner.baseStats.effects.push('Stagger');
+            log(`${winner.name} used a powerful move and is now **Staggered**!`, 'log-loss');
         }
         
     } catch (error) {
