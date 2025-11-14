@@ -10,10 +10,11 @@ const healthBarFill = document.getElementById('health-bar-fill');
 const healthValueSpan = document.getElementById('health-value');
 const currentStatusSpan = document.getElementById('current-status');
 
-// Settings Modal Elements
+// Settings Panel Elements
+// NOTE: settingsBtn is now on the menu screen
 const settingsBtn = document.getElementById('settings-btn');
-const settingsModal = document.getElementById('settings-modal');
-const closeModalBtn = document.getElementById('close-modal-btn');
+const settingsPanel = document.getElementById('settings-panel');
+const closePanelBtn = document.getElementById('close-panel-btn');
 const themeOptionButtons = document.querySelectorAll('.theme-option-btn');
 
 // --- Global Game State ---
@@ -33,10 +34,10 @@ const THEME_KEY = 'gameTheme';
 const DEFAULT_THEME = 'default';
 
 function applyTheme(themeName) {
-    // Ensure the theme name is valid, otherwise use default
-    const effectiveTheme = ['default', 'retro', 'dark', 'light'].includes(themeName) ? themeName : DEFAULT_THEME;
+    const validThemes = ['default', 'retro', 'dark', 'light'];
+    const effectiveTheme = validThemes.includes(themeName) ? themeName : DEFAULT_THEME;
     
-    // Clear existing theme classes and add the new one
+    // Set the theme class on the body
     document.body.className = `theme-${effectiveTheme}`;
 
     // Save the preference
@@ -48,6 +49,7 @@ function applyTheme(themeName) {
 function handleThemeSelection(event) {
     const selectedTheme = event.target.dataset.theme;
     applyTheme(selectedTheme);
+    // Panel will close when 'Close' is clicked, not immediately on theme change
 }
 
 // --- Status UI Management ---
@@ -56,8 +58,8 @@ function updateStatusUI() {
     // 1. Calculate percentage for Health Bar
     const percent = (gameState.currentHP / gameState.maxHP) * 100;
     
-    // 2. Update Health Bar Fill
-    healthBarFill.style.width = `${Math.max(0, percent)}%`; // Ensure width is not negative
+    // 2. Update Health Bar Fill. Max(0) prevents negative width.
+    healthBarFill.style.width = `${Math.max(0, percent)}%`; 
 
     // 3. Update Health Value Text
     healthValueSpan.textContent = `${gameState.currentHP}/${gameState.maxHP}`;
@@ -66,16 +68,20 @@ function updateStatusUI() {
     currentStatusSpan.textContent = gameState.status;
 }
 
-// --- Modal Logic ---
+// --- Panel Logic ---
 
-function openSettingsModal() {
-    settingsModal.classList.remove('hidden');
+function openSettingsPanel() {
+    // Show the panel
+    settingsPanel.classList.remove('hidden');
+    // Hide the game container/menu to prevent interference with other UI
+    if (gameState.isGameStarted) {
+        // You might want to pause the game here if it were a real-time game
+    }
 }
 
-function closeSettingsModal() {
-    settingsModal.classList.add('hidden');
+function closeSettingsPanel() {
+    settingsPanel.classList.add('hidden');
 }
-
 
 // --- Core Game Flow Functions ---
 
@@ -101,19 +107,6 @@ function startGame(isNewGame = true) {
     console.log("Game started/loaded successfully.");
 }
 
-function saveGame() {
-    try {
-        const stateString = JSON.stringify(gameState);
-        localStorage.setItem('rogueVN_saveData', stateString);
-        console.log("Game saved!");
-        // In a real app, you'd show a "Game Saved!" message here.
-        return true;
-    } catch (e) {
-        console.error("Could not save game:", e);
-        return false;
-    }
-}
-
 function loadGame() {
     const savedData = localStorage.getItem('rogueVN_saveData');
     
@@ -123,9 +116,7 @@ function loadGame() {
             console.log("Game loaded!");
             startGame(false); 
         } catch (e) {
-            console.error("Error parsing saved data:", e);
-            // NOTE: Use console.error instead of alert for better UX in an iframe
-            console.error("Corrupt save file. Starting new game.");
+            console.error("Error parsing saved data. Starting new game.", e);
             startGame(true);
         }
     } else {
@@ -145,9 +136,9 @@ document.addEventListener('DOMContentLoaded', () => {
     newGameBtn.addEventListener('click', () => startGame(true));
     loadGameBtn.addEventListener('click', loadGame);
 
-    // 3. Settings Modal Listeners
-    settingsBtn.addEventListener('click', openSettingsModal);
-    closeModalBtn.addEventListener('click', closeSettingsModal);
+    // 3. Settings Panel Listeners
+    settingsBtn.addEventListener('click', openSettingsPanel); // Button is now on menu screen
+    closePanelBtn.addEventListener('click', closeSettingsPanel);
     
     themeOptionButtons.forEach(button => {
         button.addEventListener('click', handleThemeSelection);
@@ -158,11 +149,4 @@ document.addEventListener('DOMContentLoaded', () => {
         loadGameBtn.disabled = true;
         loadGameBtn.textContent = "No Save Found";
     }
-
-    // Example of manipulating health for testing:
-    // setTimeout(() => {
-    //     gameState.currentHP = 75;
-    //     gameState.status = "Wounded";
-    //     updateStatusUI();
-    // }, 5000);
 });
