@@ -2,20 +2,20 @@
    1. CSS Variables for Theming
    ------------------------------------------------------------------- */
 
-:root {
-    /* DEFAULT (Cream/Black) */
+/* DEFAULT (Cream/Black Fantasy) */
+:root, .theme-default {
     --font-main: 'Georgia', serif;
     --bg-primary: #f8f0e5; /* Cream background */
-    --bg-secondary: #fff;
+    --bg-secondary: #ffffff;
     --text-color: #1c1c1c; /* Black text */
     --ui-color: #4a2d1e; /* Dark Earthy Brown */
     --ui-accent: #a08c7d; /* Lighter Earthy Brown */
-    --health-color: #cf2a27; /* Red */
+    --health-color: #cf2a27;
     --health-bg-color: #e0e0e0;
     --shadow-color: rgba(0, 0, 0, 0.2);
 }
 
-/* RETRO (Black/Green) */
+/* RETRO (Black/Green Terminal) */
 .theme-retro {
     --font-main: monospace;
     --bg-primary: #1a1a1a;
@@ -23,33 +23,33 @@
     --text-color: #00ff41;
     --ui-color: #008f2e;
     --ui-accent: #00ff41;
-    --health-color: #ff00ff; /* Retro contrast */
+    --health-color: #ff00ff;
     --health-bg-color: #444;
     --shadow-color: rgba(0, 255, 65, 0.5);
 }
 
-/* DARK (Black/Gray) */
+/* DARK (Black/Gray Modern) */
 .theme-dark {
     --font-main: sans-serif;
-    --bg-primary: #2c2c2c;
-    --bg-secondary: #3c3c3c;
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #2c2c2c;
     --text-color: #e0e0e0;
-    --ui-color: #7b7b7b;
-    --ui-accent: #a0a0a0;
-    --health-color: #4CAF50; /* Green */
+    --ui-color: #a0a0a0;
+    --ui-accent: #444;
+    --health-color: #4CAF50;
     --health-bg-color: #444;
-    --shadow-color: rgba(255, 255, 255, 0.1);
+    --shadow-color: rgba(0, 0, 0, 0.5);
 }
 
-/* LIGHT (White/Blue) */
+/* LIGHT (White/Blue Clean) */
 .theme-light {
     --font-main: 'Helvetica', sans-serif;
     --bg-primary: #ffffff;
     --bg-secondary: #f0f8ff;
-    --text-color: #1a1a47; /* Dark blue text */
-    --ui-color: #1e90ff; /* Dodger blue */
-    --ui-accent: #6495ed; /* Cornflower blue */
-    --health-color: #d9534f; /* Red */
+    --text-color: #1a1a47;
+    --ui-color: #1e90ff;
+    --ui-accent: #6495ed;
+    --health-color: #d9534f;
     --health-bg-color: #e6e6e6;
     --shadow-color: rgba(0, 0, 0, 0.1);
 }
@@ -68,39 +68,14 @@ body {
     align-items: center;
     height: 100vh;
     overflow: hidden;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, color 0.3s;
 }
 
 .hidden {
     display: none !important;
 }
 
-#menu-screen {
-    text-align: center;
-    padding: 40px;
-    background-color: var(--bg-secondary);
-    border: 2px solid var(--ui-accent);
-    border-radius: 10px;
-    box-shadow: 0 5px 15px var(--shadow-color);
-    width: 85%;
-    max-width: 600px;
-}
-
-#logo {
-    max-width: 200px;
-    height: auto;
-    margin-bottom: 20px;
-    border: 1px solid var(--ui-accent);
-    border-radius: 5px;
-}
-
-#menu-screen h1 {
-    font-size: 2.5em;
-    letter-spacing: 2px;
-    color: var(--ui-color);
-    margin-bottom: 5px;
-}
-
+/* Common button styling */
 button {
     background-color: var(--ui-accent);
     color: var(--bg-secondary);
@@ -108,10 +83,10 @@ button {
     border-radius: 5px;
     padding: 12px 25px;
     margin: 10px;
-    font-family: var(--font-main);
+    font-family: inherit;
     font-size: 1.1em;
     cursor: pointer;
-    transition: background-color 0.2s, transform 0.1s;
+    transition: background-color 0.2s, transform 0.1s, color 0.2s;
     box-shadow: 0 2px 5px var(--shadow-color);
 }
 
@@ -125,8 +100,34 @@ button:active {
     box-shadow: 0 1px 3px var(--shadow-color);
 }
 
+/* Menu Screen */
+#menu-screen {
+    text-align: center;
+    padding: 40px;
+    background-color: var(--bg-secondary);
+    border: 2px solid var(--ui-accent);
+    border-radius: 10px;
+    box-shadow: 0 5px 15px var(--shadow-color);
+    width: 85%;
+    max-width: 600px;
+}
+#logo {
+    max-width: 200px;
+    height: auto;
+    margin-bottom: 20px;
+    border: 1px solid var(--ui-accent);
+    border-radius: 5px;
+}
+#menu-screen h1 {
+    font-size: 2.5em;
+    letter-spacing: 2px;
+    color: var(--ui-color);
+    margin-bottom: 5px;
+}
+
+
 /* -------------------------------------------------------------------
-   3. Game UI Layout
+   3. Game UI Layout & Status Bar
    ------------------------------------------------------------------- */
 
 #game-container {
@@ -150,43 +151,10 @@ button:active {
     background-color: var(--bg-primary);
     padding: 10px 20px;
     border-bottom: 1px solid var(--ui-accent);
-    color: var(--text-color);
     font-size: 0.9em;
 }
 
-#main-area {
-    display: flex;
-    flex-grow: 1;
-}
-
-#visual-novel-area {
-    flex: 2;
-    padding: 20px;
-    border-right: 1px solid var(--ui-accent);
-    overflow-y: auto;
-}
-
-#action-box {
-    flex: 1;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-#dialogue-text {
-    background-color: var(--bg-primary);
-    border-left: 3px solid var(--ui-color);
-    padding: 10px;
-    margin-bottom: 20px;
-    font-style: italic;
-    color: var(--text-color);
-}
-
-/* -------------------------------------------------------------------
-   4. Status Bar Components (New)
-   ------------------------------------------------------------------- */
-
+/* Status Bar Components */
 .status-section {
     display: flex;
     align-items: center;
@@ -232,45 +200,74 @@ button:active {
     transform: none;
 }
 
-/* -------------------------------------------------------------------
-   5. Modal (Settings Pop-up)
-   ------------------------------------------------------------------- */
-
-.modal {
-    position: fixed;
-    z-index: 10;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent black overlay */
+#main-area {
     display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-grow: 1;
 }
 
-.modal-content {
+#visual-novel-area {
+    flex: 2;
+    padding: 20px;
+    border-right: 1px solid var(--ui-accent);
+    overflow-y: auto;
+}
+
+#action-box {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+#dialogue-text {
+    background-color: var(--bg-primary);
+    border-left: 3px solid var(--ui-color);
+    padding: 10px;
+    margin-bottom: 20px;
+    font-style: italic;
+    color: var(--text-color);
+}
+
+
+/* -------------------------------------------------------------------
+   4. Settings Panel (New Top-Right Slide-out)
+   ------------------------------------------------------------------- */
+
+#settings-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 100vh;
     background-color: var(--bg-secondary);
-    margin: auto;
-    padding: 30px;
-    border: 1px solid var(--ui-color);
-    border-radius: 8px;
-    width: 80%;
-    max-width: 400px;
-    box-shadow: 0 4px 8px 0 var(--shadow-color);
+    border-left: 2px solid var(--ui-color);
+    box-shadow: -5px 0 15px var(--shadow-color);
+    z-index: 100; /* Ensure it is above the game */
+    transform: translateX(0); /* Default position is visible */
+    transition: transform 0.3s ease-in-out;
+    overflow-y: auto;
+    color: var(--text-color);
+}
+
+#settings-panel.hidden {
+    transform: translateX(100%); /* Slide off-screen to the right */
+}
+
+.panel-content {
+    padding: 30px 20px;
     text-align: center;
+}
+
+.theme-selector h3 {
+    color: var(--ui-color);
+    margin-top: 20px;
 }
 
 .theme-selector button {
     display: block;
-    width: 80%;
-    margin: 10px auto;
-    background-color: var(--ui-accent);
-    color: var(--bg-secondary);
+    width: 100%;
+    margin: 10px 0;
     padding: 8px;
-}
-
-.theme-selector button:hover {
-    background-color: var(--ui-color);
+    font-size: 1em;
 }
