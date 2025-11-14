@@ -2,9 +2,9 @@
  * Chronicles of Heroes: Core Game and Combat Logic
  * Includes: Theme Switching, Character Selection, and Coin & Dice Clash Combat.
  * * UPDATES:
- * - Implemented 'Stagger' status (skip next turn) for Striker's Heavy Blow.
- * - Refactored Balter's Grapple/Piledriver buttons to dynamically switch.
- * - Refactored Zectus's Tri-Sword attacks into a single dynamic button.
+ * - Implemented 'Stagger' status (skip next turn) for Striker's Heavy Blow. (FIXED)
+ * - Restored Balter's Grapple/Piledriver to separate buttons; Piledriver is disabled if target is not Grappled.
+ * - Refactored Zectus's Tri-Sword attacks to work with the single dynamic button. (FIXED)
  */
 
 // --- GLOBAL GAME STATE (Local Storage is used for persistence) ---
@@ -74,7 +74,7 @@ const CHARACTERS = [
         uniquePassive: { name: 'Slow Start', type: 'CoinScaler' },
         abilities: [
             { name: 'Dragon Strike', type: 'ATTACK', damageType: 'Force', baseAttack: 4, dice: 4, coins: 2, },
-            // Added statusEffect: 'Stagger'
+            // Stagger status effect implemented
             { name: 'Heavy Blow', type: 'ATTACK', damageType: 'Force', baseAttack: 10, dice: 12, coins: 0, statusEffect: 'Stagger', cost: 10 }, 
         ]
     },
@@ -101,9 +101,9 @@ const CHARACTERS = [
         uniquePassive: { name: 'The Old One, Two', type: 'ClashWinBonus', dice: 4 }, 
         abilities: [
             { name: 'Haymaker', type: 'ATTACK', damageType: 'Physical', baseAttack: 7, dice: 10, coins: 1, },
-            // Only keeping Grapple and Piledriver definitions for utility, but only Grapple is rendered initially.
             { name: 'Grapple', type: 'SPECIAL', effect: 'Rolls d10 vs. target\'s Grapple Die. Success applies Grappled status. Target auto-loses next clash.', statusApplied: 'Grappled', baseAttack: 0, dice: 10, coins: 0, targetGrappleDie: 8 },
-            { name: 'Piledriver', type: 'ATTACK', damageType: 'Physical', baseAttack: 12, dice: 12, coins: 0, requiredTargetStatus: 'Grappled', removesTargetStatus: 'Grappled', isHidden: true }
+            // Piledriver button is always visible but disabled if target is not Grappled
+            { name: 'Piledriver', type: 'ATTACK', damageType: 'Physical', baseAttack: 12, dice: 12, coins: 0, requiredTargetStatus: 'Grappled', removesTargetStatus: 'Grappled' }
         ]
     },
 
@@ -115,9 +115,15 @@ const CHARACTERS = [
         baseStats: { maxHP: 105, defense: 2, level: 1, currentHP: 105, status: 'Alive', tri_sword_state: 'Scythe', effects: [], speed: 2 }, 
         uniquePassive: { name: 'Homogenous', type: 'ConditionalCoin', condition: { target_gender: 'Female' }, coinBonus: 2 },
         abilities: [
+            // The one dynamic button, used for rendering
+            { name: 'Tri-Sword Attack', type: 'ATTACK', damageType: 'Dynamic', baseAttack: 0, dice: 0, coins: 1, isZectusMainAttack: true }, 
+            
+            // Hidden definitions (used by getZectusCurrentAbility to fetch actual stats)
+            { name: 'Tri-Sword: Scythe', type: 'ATTACK', damageType: 'Blunt', baseAttack: 6, dice: 8, coins: 1, isHidden: true },
+            { name: 'Tri-Sword: Trident', type: 'ATTACK', damageType: 'Pierce', baseAttack: 4, dice: 10, coins: 1, isHidden: true },
+            { name: 'Tri-Sword: Hammer', type: 'ATTACK', damageType: 'Blunt', baseAttack: 8, dice: 6, coins: 1, isHidden: true },
+
             { name: 'Cycle', type: 'SWITCH', effect: 'Cycles Tri-Sword: Scythe -> Trident -> Hammer. Deals 2 damage to target on activation.', baseAttack: 2, dice: 0, coins: 0, nextState: 'Trident' },
-            // Consolidated Tri-Sword attacks into one definition for render logic
-            { name: 'Tri-Sword Attack', type: 'ATTACK', damageType: 'Dynamic', baseAttack: 0, dice: 0, coins: 1, isZectusMainAttack: true }
         ]
     },
 ];
@@ -333,7 +339,7 @@ function executeAbility(ability) {
     let resolvedAbility = ability;
     if (ability.isZectusMainAttack) {
         resolvedAbility = getZectusCurrentAbility(gameState.player.baseStats.tri_sword_state);
-        // If the current state isn't a valid attack (shouldn't happen), use the Cycle ability
+        // If the current state isn't a valid attack, use the Cycle ability as a fallback (shouldn't happen)
         if (!resolvedAbility) {
             resolvedAbility = gameState.player.abilities.find(a => a.name === 'Cycle');
         }
@@ -356,11 +362,12 @@ function executeAbility(ability) {
  * Helper function for Zectus: gets the actual ability stats based on weapon state
  */
 function getZectusCurrentAbility(state) {
-    const allZectusAbilities = CHARACTERS.find(c => c.id === 'zectus').abilities;
-    if (state === 'Scythe') return allZectusAbilities.find(a => a.name === 'Tri-Sword: Scythe');
-    if (state === 'Trident') return allZectusAbilities.find(a => a.name === 'Tri-Sword: Trident');
-    if (state === 'Hammer') return allZectusAbilities.find(a => a.name === 'Tri-Sword: Hammer');
-    return null; 
+    const zectusData = CHARACTERS.find(c => c.id === 'zectus');
+    if (!zectusData) return null;
+    
+    // Find the ability definition that matches the current state (e.g., 'Tri-Sword: Scythe')
+    const abilityName = `Tri-Sword: ${state}`;
+    return zectusData.abilities.find(a => a.name === abilityName);
 }
 
 
@@ -368,16 +375,16 @@ function getZectusCurrentAbility(state) {
  * Enemy AI selects its action.
  */
 function selectEnemyAction() {
-    const enemyAbilities = gameState.enemy.abilities;
-    const enemyAttack = enemyAbilities.find(a => a.type === 'ATTACK');
-    const enemyDefense = enemyAbilities.find(a => a.type === 'DEFENSE');
-
     // Stagger Check: If enemy is Staggered, they auto-select 'NONE' (skip turn)
     if (gameState.enemy.baseStats.effects.includes('Stagger')) {
         gameState.enemyAction = { name: 'Staggered', type: 'NONE' };
         log(`${gameState.enemy.name} is Staggered and cannot act!`, 'log-loss');
         return;
     }
+
+    const enemyAbilities = gameState.enemy.abilities;
+    const enemyAttack = enemyAbilities.find(a => a.type === 'ATTACK');
+    const enemyDefense = enemyAbilities.find(a => a.type === 'DEFENSE');
 
     let chosenAbility;
     if (enemyDefense && Math.random() < 0.5) {
@@ -403,8 +410,7 @@ function resolveCombatRound() {
     // Check Player Stagger: If player is Staggered, they skip this action entirely
     if (gameState.player.baseStats.effects.includes('Stagger')) {
         log(`${gameState.player.name} is Staggered and skips their action!`, 'log-loss');
-        // Player action is effectively cancelled, but we still need to check the enemy
-        // If enemy also attacked, it's a null clash. If enemy defended/special, their action proceeds.
+        // Player action is effectively cancelled.
         
         // If enemy didn't attack or was also staggered, go to cleanup
         if (enemyAbility.type !== 'ATTACK' || enemyAbility.type === 'NONE') {
@@ -470,8 +476,13 @@ function resolveCombatRound() {
         // --- Resolve Second Action ---
         // Only run second action if the target is still alive and the action type is not NONE (Staggered)
         if (second.baseStats.currentHP > 0 && secondAbility.type !== 'NONE') {
-            log(`${second.name} (${secondAbility.name}) acts second.`, 'log-special');
-            executeSingleAction(second, secondAbility, first);
+            // Crucial: check if the second actor was Staggered by the first actor
+            if (second.baseStats.effects.includes('Stagger')) {
+                log(`${second.name} was **Staggered** and skips their action!`, 'log-loss');
+            } else {
+                log(`${second.name} (${secondAbility.name}) acts second.`, 'log-special');
+                executeSingleAction(second, secondAbility, first);
+            }
         } else if (secondAbility.type === 'NONE') {
             log(`${second.name} skips their turn.`, 'log-loss');
         }
@@ -489,6 +500,15 @@ function resolveCombatRound() {
 function executeSingleAction(attacker, ability, target) {
     if (target.baseStats.currentHP <= 0) return; 
     if (!ability) return; 
+
+    // Zectus: If the ability is the dynamic placeholder, resolve it to the current weapon's stats
+    if (attacker.id === 'zectus' && ability.isZectusMainAttack) {
+        ability = getZectusCurrentAbility(attacker.baseStats.tri_sword_state);
+        if (!ability) {
+             log(`CRITICAL: Zectus's current weapon state (${attacker.baseStats.tri_sword_state}) is invalid.`, 'log-loss');
+             return;
+        }
+    }
 
     if (ability.type === 'DEFENSE') {
         if (ability.defenseEffect === 'NegateNextHit') {
@@ -560,9 +580,13 @@ function handleClash(pAbility, eAbility) {
         // Balter Piledriver (Grapple removal happens in applyDamage)
         const isPiledriver = pAbility.name === 'Piledriver';
         
-        // ZECTUS ATTACK: If Zectus, get dynamic stats
-        if (pAbility.isZectusMainAttack) {
+        // ZECTUS ATTACK: If Zectus, get dynamic stats for the CLASH
+        if (gameState.player.id === 'zectus' && pAbility.isZectusMainAttack) {
             pAbility = getZectusCurrentAbility(gameState.player.baseStats.tri_sword_state);
+            if (!pAbility) {
+                 log(`CRITICAL: Zectus's current weapon state (${gameState.player.baseStats.tri_sword_state}) is invalid for clash.`, 'log-loss');
+                 return;
+            }
         }
 
 
@@ -602,8 +626,8 @@ function handleClash(pAbility, eAbility) {
         // --- 5. DETERMINE WINNER ---
         const isEnemyGrappled = gameState.enemy.baseStats.effects.includes('Grappled');
 
-        if (isEnemyGrappled && !isPiledriver) { 
-            // Grapple only auto-loses if the player didn't use Piledriver (which removes Grappled)
+        // Balter Grapple Check: If enemy is Grappled and player is NOT using Piledriver, player wins automatically
+        if (isEnemyGrappled && !isPiledriver && gameState.player.id === 'balter') { 
             winner = gameState.player;
             loser = gameState.enemy;
             winnerAbility = pAbility;
@@ -761,37 +785,22 @@ function renderCombatActions() {
     const isEnemyGrappled = gameState.enemy.baseStats.effects.includes('Grappled'); 
     const currentWeapon = gameState.player.baseStats.tri_sword_state; 
     
-    // Filter out hidden abilities (Balter's Piledriver definition, Zectus's 3 Tri-Sword definitions)
-    const renderableAbilities = playerAbilities.filter(ability => {
-        // Balter's Grapple/Piledriver logic
-        if (gameState.player.id === 'balter') {
-            const isGrapple = ability.name === 'Grapple';
-            const isPiledriver = ability.name === 'Piledriver';
-            
-            // Only render Grapple if enemy is NOT grappled, or Piledriver if enemy IS grappled.
-            if (isGrapple && isEnemyGrappled) return false;
-            if (isPiledriver && !isEnemyGrappled) return false;
-            if (isPiledriver || isGrapple) return true;
-        }
-
-        // Zectus's Tri-Sword logic: only show the combined attack button
-        if (gameState.player.id === 'zectus') {
-             if (ability.isZectusMainAttack || ability.name === 'Cycle') return true;
-             // Hide the individual Tri-Sword definitions
-             if (ability.name.startsWith('Tri-Sword:')) return false;
-        }
-
-        return !ability.isHidden;
-    });
+    // Filter out truly hidden abilities (the specific Zectus attack definitions)
+    const renderableAbilities = playerAbilities.filter(ability => !ability.isHidden);
 
     renderableAbilities.forEach(ability => {
         const btn = document.createElement('button');
         btn.classList.add('combat-btn');
         let displayName = ability.name;
 
-        // Balter's dynamic button label
-        if (gameState.player.id === 'balter' && ability.name === 'Piledriver') {
-            displayName = 'Piledriver (FINISHER!)'; 
+        // Balter's Piledriver (always visible, disabled when not Grappled)
+        if (ability.name === 'Piledriver') {
+            btn.disabled = !isEnemyGrappled || gameState.playerAction !== null;
+            if (isEnemyGrappled) {
+                btn.classList.add('combo-ready');
+            } else {
+                btn.classList.remove('combo-ready');
+            }
         }
         
         // Zectus's dynamic button label and active state
