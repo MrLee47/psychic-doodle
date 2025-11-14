@@ -27,8 +27,8 @@
                 <span id="current-status">Alive</span>
             </div>
 
-            <!-- 3. Settings Button (In the top-right corner of the status bar) -->
-            <button id="settings-btn" class="icon-button">⚙️</button>
+            <!-- Settings Button is now ONLY on the Menu Screen -->
+            <div class="spacer"></div>
         </header>
 
         <main id="main-area">
@@ -57,12 +57,15 @@
         <div class="menu-options">
             <button id="new-game-btn">New Game</button>
             <button id="load-game-btn">Load Game</button>
+            
+            <!-- NEW SETTINGS BUTTON LOCATION -->
+            <button id="settings-btn" class="settings-menu-button">Settings ⚙️</button>
         </div>
 
         <p class="footer-text">Built for friends & epic tales</p>
     </div>
 
-    <!-- THE SETTINGS PANEL (Slides in from top-right) -->
+    <!-- THE SETTINGS PANEL (Slides in from top-right, hidden by default) -->
     <div id="settings-panel" class="settings-panel hidden">
         <div class="panel-content">
             <h2>Settings</h2>
