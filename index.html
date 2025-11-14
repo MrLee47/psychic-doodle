@@ -701,11 +701,13 @@ function toggleSettingsPanel() {
 
 function setView(viewName) {
     gameState.currentView = viewName;
+    
+    // Hide all major screens first
     menuScreen.classList.add('hidden');
     mainGameWrapper.classList.add('hidden'); // Use wrapper for grid layout
     charSelectScreen.classList.add('hidden');
     
-    // Manage Status Bar Visibility
+    // Manage Status Bar Visibility (defaults to hidden)
     enemyStatusCard.classList.add('hidden');
     actionHeader.textContent = 'Actions';
 
@@ -1502,8 +1504,10 @@ function init() {
         btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
     });
     
+    // Set initial view to the Menu
     setView('menu'); 
 
+    // ATTACH CORE BUTTON LISTENERS
     newGameBtn.addEventListener('click', () => setView('select'));
 
     openSettingsBtn.addEventListener('click', toggleSettingsPanel);
