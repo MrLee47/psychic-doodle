@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Text-Based Roguelike VN</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="game-container" class="hidden">
+        <header id="status-bar">
+            <p>HP: 100 | Location: Starting Area</p>
+        </header>
+
+        <main id="main-area">
+            <div id="visual-novel-area">
+                <p>The journey begins...</p>
+            </div>
+
+            <div id="action-box">
+                <p id="dialogue-text">Welcome to the game!</p>
+                <button onclick="console.log('Action 1 clicked')">Action 1</button>
+            </div>
+        </main>
+    </div>
+
+    <div id="menu-screen">
+        <h1>ROGUE VISIONS</h1>
+        <p>A Textual Adventure</p>
+        
+        <div class="menu-options">
+            <button id="new-game-btn">New Game</button>
+            <button id="load-game-btn">Load Game</button>
+        </div>
+
+        <p class="footer-text">Built with HTML, CSS, & JS</p>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>
