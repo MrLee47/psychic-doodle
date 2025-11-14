@@ -135,7 +135,6 @@ const rollDie = (max) => Math.floor(Math.random() * max) + 1;
 
 /**
  * Rolls a specified number of coins (50/50 chance for 1 point per coin).
- * Simplified to use a direct integer count for robustness.
  */
 const rollCoins = (count) => {
     let sum = 0;
@@ -465,86 +464,88 @@ function executeSingleAction(attacker, ability, target) {
  */
 function handleClash(pAbility, eAbility) {
     try {
-        // CRITICAL CHECK 1: Ensure both abilities are defined before attempting to access properties
+        // CRITICAL CHECK 1: Ensure both abilities are defined
         if (!pAbility || !eAbility) {
             log(`CRITICAL: Missing Player(${!!pAbility}) or Enemy(${!!eAbility}) ability object in Clash.`, 'log-loss');
             return; 
         }
 
-        // CRITICAL CHECK 2: Logs the actual names of the abilities used
+        // CRITICAL CHECK 2: Log actual ability names
         log(`DEBUG ABILITY NAMES: P(${pAbility.name}) vs E(${eAbility.name})`, 'log-debug');
+
+        // 1. Determine base coin and dice counts
+        const basePlayerCoins = (typeof pAbility.coins === 'number') ? pAbility.coins : 0;
+        const baseEnemyCoins = (typeof eAbility.coins === 'number') ? eAbility.coins : 0;
+        const pDice = (typeof pAbility.dice === 'number' && pAbility.dice > 0) ? pAbility.dice : 1;
+        const eDice = (typeof eAbility.dice === 'number' && eAbility.dice > 0) ? eAbility.dice : 1;
         
-        // 1. Determine final coin count (Using safe fallbacks)
-        const basePlayerCoins = typeof pAbility.coins === 'number' ? pAbility.coins : 0;
-        const baseEnemyCoins = typeof eAbility.coins === 'number' ? eAbility.coins : 0;
-        
+        // **RE-ADDED STRIKER PASSIVE CALCULATION**
         // Striker Passive (safely calculate bonus)
         const strikerBonus = (gameState.player.id === 'striker' && gameState.player.baseStats.consecutive_rounds > 0) 
             ? gameState.player.baseStats.consecutive_rounds 
             : 0;
 
+        // 2. Determine final coin counts
         const pCoins = basePlayerCoins + strikerBonus;
         const eCoins = baseEnemyCoins;
 
-        // Safely determine dice values (Using safe fallbacks, dice MUST be > 0 for rollDie)
-        const pDice = typeof pAbility.dice === 'number' && pAbility.dice > 0 ? pAbility.dice : 1;
-        const eDice = typeof eAbility.dice === 'number' && eAbility.dice > 0 ? eAbility.dice : 1;
 
-        // Final sanity check log before rolls
+        // Log parameters (now including Striker's bonus in PCoins)
         log(`DEBUG CLASH PARAMS: PCoins(${pCoins}) ECoins(${eCoins}) PDice(${pDice}) EDice(${eDice})`, 'log-debug'); 
 
-        // 2. Calculate Clash Values
-        // Use 'let' for all values to prevent scope issues during calculation
-        let playerRoll = rollDie(pDice);
-        let playerCoinBonus = rollCoins(pCoins);
+        // 3. Roll dice and coins
+        const playerRoll = rollDie(pDice);
+        const enemyRoll = rollDie(eDice);
+        const playerCoinBonus = rollCoins(pCoins); // Use boosted pCoins
+        const enemyCoinBonus = rollCoins(eCoins); // Use base eCoins
+
+        // Log rolls
         log(`DEBUG PLAYER ROLL: D${pDice} = ${playerRoll} | Coin Bonus(${pCoins}) = ${playerCoinBonus}`, 'log-debug');
-
-        let playerClashValue = BASE_CLASH_VALUE + playerRoll + playerCoinBonus;
-
-        let enemyRoll = rollDie(eDice);
-        let enemyCoinBonus = rollCoins(eCoins);
         log(`DEBUG ENEMY ROLL: D${eDice} = ${enemyRoll} | Coin Bonus(${eCoins}) = ${enemyCoinBonus}`, 'log-debug');
-        
-        let enemyClashValue = BASE_CLASH_VALUE + enemyRoll + enemyCoinBonus;
 
-        // This log confirms the calculation succeeded
+        // 4. Calculate clash values
+        const playerClashValue = BASE_CLASH_VALUE + playerRoll + playerCoinBonus;
+        const enemyClashValue = BASE_CLASH_VALUE + enemyRoll + enemyCoinBonus;
+
         log(`Clash! P Roll: ${playerRoll} (+${playerCoinBonus} coins) = ${playerClashValue} | E Roll: ${enemyRoll} (+${enemyCoinBonus} coins) = ${enemyClashValue}`);
 
-        let winner, loser, winnerAbility;
+        let winner, loser, winnerAbility, winnerCoinBonus, winnerDiceRoll;
 
-        // Balter Grapple Check: Grappled target auto-loses clash
+        // 5. Determine Winner (including Grapple check)
         const isEnemyGrappled = gameState.enemy.baseStats.effects.includes('Grappled');
-        
+
         if (isEnemyGrappled) {
             winner = gameState.player;
             loser = gameState.enemy;
             winnerAbility = pAbility;
+            winnerCoinBonus = playerCoinBonus;
+            winnerDiceRoll = playerRoll;
             log(`${gameState.enemy.name} is Grappled and automatically loses the clash!`, 'log-loss');
         } else if (playerClashValue >= enemyClashValue) {
             winner = gameState.player;
             loser = gameState.enemy;
             winnerAbility = pAbility;
+            winnerCoinBonus = playerCoinBonus;
+            winnerDiceRoll = playerRoll;
         } else {
             winner = gameState.enemy;
             loser = gameState.player;
             winnerAbility = eAbility;
+            winnerCoinBonus = enemyCoinBonus; // Corrected to use enemy's rolls
+            winnerDiceRoll = enemyRoll;       // Corrected to use enemy's rolls
         }
 
         log(`${winner.name} wins the clash!`, 'log-win');
 
-        // Damage is applied by the winner's attack
-        const coinBonus = winner.id === gameState.player.id ? playerCoinBonus : enemyCoinBonus;
-        const diceRoll = winner.id === gameState.player.id ? playerRoll : enemyRoll;
-
-        // Check winner ability before applying damage (safety)
-        if (winnerAbility) {
-            applyDamage(winnerAbility, winner, loser, coinBonus, diceRoll);
+        // 6. Apply Damage
+        if (winnerAbility && typeof winnerAbility === 'object') {
+            // Pass the winner's specific roll results
+            applyDamage(winnerAbility, winner, loser, winnerCoinBonus, winnerDiceRoll); 
         } else {
-            log(`Clash finished but winner ability was undefined. No damage applied.`, 'log-loss');
+            log(`Clash finished but winner ability was undefined or invalid. No damage applied.`, 'log-loss');
         }
 
-        
-        // --- Balter's "The Old One, Two" Passive ---
+        // 7. Balter's "The Old One, Two" Passive
         if (winner.id === 'balter' && winner.uniquePassive.type === 'ClashWinBonus' && loser.baseStats.currentHP > 0) {
             const bonusDamageRoll = rollDie(winner.uniquePassive.dice);
             // Apply loser's defense to the bonus hit
@@ -553,7 +554,7 @@ function handleClash(pAbility, eAbility) {
             log(`Balter follows up with "The Old One, Two" for an extra ${bonusDamage} damage! (d${winner.uniquePassive.dice} roll: ${bonusDamageRoll})`, 'log-win');
         }
 
-        // CONFIRM SUCCESSFUL CLASH RESOLUTION
+        // 8. Debug log for successful resolution
         log(`DEBUG: Clash resolved successfully.`, 'log-debug');
         
     } catch (error) {
