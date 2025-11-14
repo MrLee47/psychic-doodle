@@ -355,8 +355,8 @@ const CHARACTERS = [
     {
         id: 'striker',
         name: 'Striker',
-        description: 'Scales in power the longer a fight lasts.',
-        baseStats: { maxHP: 110, defense: 2, level: 1, currentHP: 110, status: 'Alive', consecutive_rounds: 0, effects: [], speed: 4, gender: 'Male' }, 
+        description: 'Scales in power the longer the fight goes on.',
+        baseStats: { maxHP: 110, defense: 1, level: 1, currentHP: 110, status: 'Alive', consecutive_rounds: 0, effects: [], speed: 4, gender: 'Male' }, 
         uniquePassive: { name: 'Slow Start', type: 'CoinScaler' },
         abilities: [
             { name: 'Dragon Strike', type: 'ATTACK', damageType: 'Force', baseAttack: 4, dice: 4, coins: 2, },
@@ -368,8 +368,8 @@ const CHARACTERS = [
     {
         id: 'shutenmaru',
         name: 'Shuten-Maru',
-        description: 'A swift, ghostly fighter focused on survivability.',
-        baseStats: { maxHP: 100, defense: 1, level: 1, currentHP: 100, status: 'Alive', lastDamageTaken: 0, effects: [], speed: 3, gender: 'Female' }, 
+        description: 'A psycho demon who uses ethereal powers.',
+        baseStats: { maxHP: 105, defense: 2, level: 1, currentHP: 100, status: 'Alive', lastDamageTaken: 0, effects: [], speed: 3, gender: 'Female' }, 
         uniquePassive: { name: 'Chrono-Fist', type: 'RollTrigger', abilityName: 'Ghost Fist', triggerValue: 8 },
         abilities: [
             { name: 'Ghost Fist', type: 'ATTACK', damageType: 'Psychic', baseAttack: 6, dice: 8, coins: 1, },
@@ -380,7 +380,7 @@ const CHARACTERS = [
     {
         id: 'balter',
         name: 'Balter',
-        description: 'A wrestling powerhouse who controls the battlefield.',
+        description: 'A muscular powerhouse who controls the battlefield.',
         baseStats: { maxHP: 130, defense: 3, level: 1, currentHP: 130, status: 'Alive', isGrappling: false, grapple_die: 8, effects: [], speed: 1, gender: 'Male' },
         // FIX: Increased passive dice from 4 to 10 for more noticeable bonus damage.
         uniquePassive: { name: 'The Old One-Two', type: 'ClashWinBonus', dice: 10 }, 
@@ -395,7 +395,7 @@ const CHARACTERS = [
         id: 'zectus',
         name: 'Zectus Maximus',
         description: 'A versatile warrior whose damage type changes frequently.',
-        baseStats: { maxHP: 105, defense: 2, level: 1, currentHP: 105, status: 'Alive', tri_sword_state: 'Scythe', effects: [], speed: 2, gender: 'Male' }, 
+        baseStats: { maxHP: 100, defense: 2, level: 1, currentHP: 105, status: 'Alive', tri_sword_state: 'Scythe', effects: [], speed: 2, gender: 'Male' }, 
         uniquePassive: { name: 'Homogenous', type: 'ConditionalCoin', condition: { target_gender: 'Female' }, coinBonus: 2 },
         abilities: [
             { name: 'Tri-Sword Attack', type: 'ATTACK', damageType: 'Dynamic', baseAttack: 0, dice: 0, coins: 1, isZectusMainAttack: true }, 
