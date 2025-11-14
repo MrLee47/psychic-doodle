@@ -15,7 +15,7 @@ export const Characters = [
     {
         id: 'striker',
         name: 'Striker',
-        description: 'A damage specialist who scales in power the longer a fight lasts.',
+        description: 'A damage specialist who scales in power as the fight goes on.',
         baseStats: {
             maxHP: 110,
             defense: 2,
@@ -53,7 +53,7 @@ export const Characters = [
     {
         id: 'shutenmaru',
         name: 'Shuten-Maru',
-        description: 'A swift, ghostly fighter focused on survivability and counter-play.',
+        description: 'A psycho demon who has unmatched survivability.',
         baseStats: {
             maxHP: 100,
             defense: 1,
@@ -91,7 +91,7 @@ export const Characters = [
     {
         id: 'balter',
         name: 'Balter',
-        description: 'A wrestling powerhouse who controls the battlefield through grappling.',
+        description: 'A muscular powerhouse who controls the battlefield through grappling.',
         baseStats: {
             maxHP: 130,
             defense: 3,
@@ -141,8 +141,8 @@ export const Characters = [
 
     // --- 4. Zectus Maximus (Cycle: Weapon Rotation & Homogenous: Conditional Coins) ---
     {
-        id: 'zectus',
-        name: 'Zectus Maximus',
+        id: 'zect',
+        name: 'Zect Sanctus',
         description: 'A versatile warrior whose damage type changes frequently.',
         baseStats: {
             maxHP: 105,
