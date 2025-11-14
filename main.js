@@ -1,6 +1,10 @@
 /**
  * Chronicles of Heroes: Core Game and Combat Logic
  * Includes: Theme Switching, Character Selection, and Coin & Dice Clash Combat.
+ * * UPDATES:
+ * - Implemented 'Stagger' status (skip next turn) for Striker's Heavy Blow.
+ * - Refactored Balter's Grapple/Piledriver buttons to dynamically switch.
+ * - Refactored Zectus's Tri-Sword attacks into a single dynamic button.
  */
 
 // --- GLOBAL GAME STATE (Local Storage is used for persistence) ---
@@ -70,7 +74,8 @@ const CHARACTERS = [
         uniquePassive: { name: 'Slow Start', type: 'CoinScaler' },
         abilities: [
             { name: 'Dragon Strike', type: 'ATTACK', damageType: 'Force', baseAttack: 4, dice: 4, coins: 2, },
-            { name: 'Heavy Blow', type: 'ATTACK', damageType: 'Force', baseAttack: 10, dice: 12, coins: 0, statusEffect: 'StunNext', cost: 10 }, 
+            // Added statusEffect: 'Stagger'
+            { name: 'Heavy Blow', type: 'ATTACK', damageType: 'Force', baseAttack: 10, dice: 12, coins: 0, statusEffect: 'Stagger', cost: 10 }, 
         ]
     },
 
@@ -96,6 +101,7 @@ const CHARACTERS = [
         uniquePassive: { name: 'The Old One, Two', type: 'ClashWinBonus', dice: 4 }, 
         abilities: [
             { name: 'Haymaker', type: 'ATTACK', damageType: 'Physical', baseAttack: 7, dice: 10, coins: 1, },
+            // Only keeping Grapple and Piledriver definitions for utility, but only Grapple is rendered initially.
             { name: 'Grapple', type: 'SPECIAL', effect: 'Rolls d10 vs. target\'s Grapple Die. Success applies Grappled status. Target auto-loses next clash.', statusApplied: 'Grappled', baseAttack: 0, dice: 10, coins: 0, targetGrappleDie: 8 },
             { name: 'Piledriver', type: 'ATTACK', damageType: 'Physical', baseAttack: 12, dice: 12, coins: 0, requiredTargetStatus: 'Grappled', removesTargetStatus: 'Grappled', isHidden: true }
         ]
@@ -110,9 +116,8 @@ const CHARACTERS = [
         uniquePassive: { name: 'Homogenous', type: 'ConditionalCoin', condition: { target_gender: 'Female' }, coinBonus: 2 },
         abilities: [
             { name: 'Cycle', type: 'SWITCH', effect: 'Cycles Tri-Sword: Scythe -> Trident -> Hammer. Deals 2 damage to target on activation.', baseAttack: 2, dice: 0, coins: 0, nextState: 'Trident' },
-            { name: 'Tri-Sword: Scythe', type: 'ATTACK', damageType: 'Necrotic', baseAttack: 6, dice: 8, coins: 1, weaponState: 'Scythe' },
-            { name: 'Tri-Sword: Trident', type: 'ATTACK', damageType: 'Physical', baseAttack: 7, dice: 10, coins: 1, weaponState: 'Trident' },
-            { name: 'Tri-Sword: Hammer', type: 'ATTACK', damageType: 'Force', baseAttack: 8, dice: 12, coins: 1, weaponState: 'Hammer' }
+            // Consolidated Tri-Sword attacks into one definition for render logic
+            { name: 'Tri-Sword Attack', type: 'ATTACK', damageType: 'Dynamic', baseAttack: 0, dice: 0, coins: 1, isZectusMainAttack: true }
         ]
     },
 ];
@@ -138,9 +143,8 @@ const rollDie = (max) => Math.floor(Math.random() * max) + 1;
  */
 const rollCoins = (count) => {
     let sum = 0;
-    // Count is assumed to be a non-negative integer here for minimal error handling
     for (let i = 0; i < count; i++) {
-        sum += (Math.random() < 0.5 ? 0 : 1); // 50% chance for 1
+        sum += (Math.random() < 0.5 ? 0 : 1);
     }
     return sum;
 };
@@ -152,7 +156,16 @@ function updateHealthDisplay(entity, ui) {
 
     ui.hpBar.style.width = `${percentage}%`;
     ui.hpText.textContent = `${currentHP}/${maxHP}`;
-    ui.statusText.textContent = entity.baseStats.status;
+    
+    // Display status effects if present
+    const effects = entity.baseStats.effects;
+    let statusDisplay = entity.baseStats.status;
+
+    if (effects.length > 0) {
+        statusDisplay += ` (${effects.join(', ')})`;
+    }
+    
+    ui.statusText.textContent = statusDisplay;
 
     if (currentHP <= 0) {
         ui.hpBar.style.width = '0%';
@@ -289,7 +302,6 @@ function startNewGame(charId) {
     log(`${gameState.enemy.name} challenges ${gameState.player.name}!`, 'log-special');
     updateCombatUI();
     
-    // Ensure Balter's old "Pass Turn" button is always hidden
     passTurnBtn.classList.add('hidden'); 
 }
 
@@ -300,7 +312,6 @@ function updateCombatUI() {
     playerStatus.name.textContent = gameState.player.name;
     enemyStatus.name.textContent = gameState.enemy.name;
 
-    // Ensure Balter's old "Pass Turn" button is always hidden
     passTurnBtn.classList.add('hidden'); 
 
     // Disable action buttons if an action has been chosen
@@ -317,21 +328,19 @@ function updateCombatUI() {
 function executeAbility(ability) {
     if (gameState.playerAction) return; 
 
-    // Balter's Piledriver requires Grappled status on the enemy
-    if (gameState.player.id === 'balter' && ability.name === 'Piledriver' && !gameState.enemy.baseStats.effects.includes('Grappled')) {
-        log("Piledriver requires the enemy to be Grappled!", 'log-loss');
-        return;
+    // ZECTUS DYNAMIC ATTACK RESOLUTION
+    // If the player clicked the dynamic 'Tri-Sword Attack' button, find the correct stats.
+    let resolvedAbility = ability;
+    if (ability.isZectusMainAttack) {
+        resolvedAbility = getZectusCurrentAbility(gameState.player.baseStats.tri_sword_state);
+        // If the current state isn't a valid attack (shouldn't happen), use the Cycle ability
+        if (!resolvedAbility) {
+            resolvedAbility = gameState.player.abilities.find(a => a.name === 'Cycle');
+        }
     }
     
-    // Zectus's Tri-Sword attacks can only be used if they match the current state
-    if (gameState.player.id === 'zectus' && ability.type === 'ATTACK' && ability.weaponState !== gameState.player.baseStats.tri_sword_state) {
-        log(`The ${ability.weaponState} is not Zectus's active weapon state! Cycle first.`, 'log-loss');
-        return;
-    }
-
-
-    gameState.playerAction = ability;
-    log(`${gameState.player.name} chooses ${ability.name}...`, 'log-special');
+    gameState.playerAction = resolvedAbility;
+    log(`${gameState.player.name} chooses ${resolvedAbility.name}...`, 'log-special');
     
     // Disable buttons until round resolves
     updateCombatUI();
@@ -344,12 +353,31 @@ function executeAbility(ability) {
 }
 
 /**
+ * Helper function for Zectus: gets the actual ability stats based on weapon state
+ */
+function getZectusCurrentAbility(state) {
+    const allZectusAbilities = CHARACTERS.find(c => c.id === 'zectus').abilities;
+    if (state === 'Scythe') return allZectusAbilities.find(a => a.name === 'Tri-Sword: Scythe');
+    if (state === 'Trident') return allZectusAbilities.find(a => a.name === 'Tri-Sword: Trident');
+    if (state === 'Hammer') return allZectusAbilities.find(a => a.name === 'Tri-Sword: Hammer');
+    return null; 
+}
+
+
+/**
  * Enemy AI selects its action.
  */
 function selectEnemyAction() {
     const enemyAbilities = gameState.enemy.abilities;
     const enemyAttack = enemyAbilities.find(a => a.type === 'ATTACK');
     const enemyDefense = enemyAbilities.find(a => a.type === 'DEFENSE');
+
+    // Stagger Check: If enemy is Staggered, they auto-select 'NONE' (skip turn)
+    if (gameState.enemy.baseStats.effects.includes('Stagger')) {
+        gameState.enemyAction = { name: 'Staggered', type: 'NONE' };
+        log(`${gameState.enemy.name} is Staggered and cannot act!`, 'log-loss');
+        return;
+    }
 
     let chosenAbility;
     if (enemyDefense && Math.random() < 0.5) {
@@ -372,6 +400,28 @@ function resolveCombatRound() {
 
     if (checkGameOver()) return;
 
+    // Check Player Stagger: If player is Staggered, they skip this action entirely
+    if (gameState.player.baseStats.effects.includes('Stagger')) {
+        log(`${gameState.player.name} is Staggered and skips their action!`, 'log-loss');
+        // Player action is effectively cancelled, but we still need to check the enemy
+        // If enemy also attacked, it's a null clash. If enemy defended/special, their action proceeds.
+        
+        // If enemy didn't attack or was also staggered, go to cleanup
+        if (enemyAbility.type !== 'ATTACK' || enemyAbility.type === 'NONE') {
+            log(`...continuing to cleanup.`, 'log-special');
+            setTimeout(endTurnCleanup, 1000);
+            return;
+        } 
+        
+        // If enemy attacked while player was Staggered, enemy attacks unopposed
+        log(`${gameState.enemy.name} attacks while ${gameState.player.name} is Staggered!`, 'log-win');
+        executeSingleAction(gameState.enemy, enemyAbility, gameState.player);
+        if (checkGameOver()) return;
+        setTimeout(endTurnCleanup, 1000);
+        return;
+    }
+
+
     // Safely check types and speeds
     const pType = playerAbility ? playerAbility.type : 'NONE';
     const eType = enemyAbility ? enemyAbility.type : 'NONE';
@@ -385,10 +435,9 @@ function resolveCombatRound() {
         log(`Both attack! Initiating CLASH...`, 'log-special');
         handleClash(playerAbility, enemyAbility);
         
-        // CRITICAL FIX: Check for game over immediately after clash damage is applied
         if (checkGameOver()) return; 
     
-    // Case 2: Mixed Actions -> Speed determines priority
+    // Case 2: Mixed Actions or Non-Attack vs Attack -> Speed determines priority
     } else {
         let first, second;
         let firstAbility, secondAbility;
@@ -409,21 +458,24 @@ function resolveCombatRound() {
             first = gameState.player;
             firstAbility = playerAbility;
             second = gameState.enemy;
-            secondAbility = enemyAbility; // FIX: Enemy uses its own chosen ability (enemyAction)
+            secondAbility = enemyAbility;
             log(`Speed tie! ${first.name} acts first.`, 'log-special');
         }
 
+        // --- Resolve First Action ---
         log(`${first.name} (${firstAbility.name}) acts first.`, 'log-special');
-
-        // Resolve First Action
         executeSingleAction(first, firstAbility, second);
         if (checkGameOver()) return;
         
-        // Resolve Second Action
-        log(`${second.name} (${secondAbility.name}) acts second.`, 'log-special');
-        executeSingleAction(second, secondAbility, first);
+        // --- Resolve Second Action ---
+        // Only run second action if the target is still alive and the action type is not NONE (Staggered)
+        if (second.baseStats.currentHP > 0 && secondAbility.type !== 'NONE') {
+            log(`${second.name} (${secondAbility.name}) acts second.`, 'log-special');
+            executeSingleAction(second, secondAbility, first);
+        } else if (secondAbility.type === 'NONE') {
+            log(`${second.name} skips their turn.`, 'log-loss');
+        }
         
-        // CRITICAL FIX: Check for game over after the second action resolves
         if (checkGameOver()) return; 
     }
     
@@ -435,32 +487,27 @@ function resolveCombatRound() {
  * Resolves a single action (Defense, Special, or Attack) outside of a clash.
  */
 function executeSingleAction(attacker, ability, target) {
-    if (target.baseStats.currentHP <= 0) return; // Target is already defeated by the first action
-    if (!ability) return; // Safety check
+    if (target.baseStats.currentHP <= 0) return; 
+    if (!ability) return; 
 
     if (ability.type === 'DEFENSE') {
         if (ability.defenseEffect === 'NegateNextHit') {
-            // Safety check for effects array
             if (!Array.isArray(target.baseStats.effects)) { target.baseStats.effects = []; }
             target.baseStats.effects.push('NegateNextHit');
-        } else {
-             // Add other defense buffs (e.g., temporary defense boost)
         }
         log(`${attacker.name} successfully executes a defensive maneuver!`, 'log-win');
         
     } else if (ability.type === 'SPECIAL') {
         // Balter's Grapple logic
         if (ability.name === 'Grapple') {
-            const attackerRoll = rollDie(ability.dice || 10); // Use 10 as default dice
+            const attackerRoll = rollDie(ability.dice || 10); 
             const targetGrappleDie = target.baseStats.grapple_die || 8;
             const targetRoll = rollDie(targetGrappleDie);
             
             if (attackerRoll > targetRoll) {
-                // Safety check for effects array
                 if (!Array.isArray(target.baseStats.effects)) { target.baseStats.effects = []; }
                 target.baseStats.effects.push('Grappled');
                 log(`${attacker.name} successfully grapples ${target.name}! ${target.name} auto-loses the next clash.`, 'log-win');
-                attacker.baseStats.isGrappling = true;
             } else {
                 log(`${attacker.name} fails to grapple ${target.name}.`, 'log-loss');
             }
@@ -483,6 +530,13 @@ function executeSingleAction(attacker, ability, target) {
     } else if (ability.type === 'ATTACK') {
         // If the attacker is faster and attacks, apply damage normally
         applyDamage(ability, attacker, target);
+        
+        // Apply Stagger if the attack has that status effect
+        if (ability.statusEffect === 'Stagger') {
+            if (!Array.isArray(target.baseStats.effects)) { target.baseStats.effects = []; }
+            target.baseStats.effects.push('Stagger');
+            log(`${target.name} is **Staggered** and will skip their next turn!`, 'log-loss');
+        }
     }
 }
 
@@ -492,49 +546,48 @@ function executeSingleAction(attacker, ability, target) {
  */
 function handleClash(pAbility, eAbility) {
     try {
-        // CRITICAL CHECK 1: Ensure both abilities are defined
         if (!pAbility || !eAbility) {
-            log(`CRITICAL: Missing Player(${!!pAbility}) or Enemy(${!!eAbility}) ability object in Clash.`, 'log-loss');
+            log(`CRITICAL: Missing Player or Enemy ability object in Clash.`, 'log-loss');
             return; 
         }
 
-        // CRITICAL SAFETY CHECK: Ensure effects list is an array before using it in the Grapple check
-        if (!Array.isArray(gameState.enemy.baseStats.effects)) {
-             gameState.enemy.baseStats.effects = [];
-             console.warn("CRITICAL: Enemy effects array was missing, reset to [].");
-        }
+        if (!Array.isArray(gameState.enemy.baseStats.effects)) { gameState.enemy.baseStats.effects = []; }
+        if (!Array.isArray(gameState.player.baseStats.effects)) { gameState.player.baseStats.effects = []; }
 
-        // CRITICAL CHECK 2: Log actual ability names
+        // --- 1. SETUP ---
         log(`DEBUG ABILITY NAMES: P(${pAbility.name}) vs E(${eAbility.name})`, 'log-debug');
 
-        // 1. Determine base coin and dice counts
+        // Balter Piledriver (Grapple removal happens in applyDamage)
+        const isPiledriver = pAbility.name === 'Piledriver';
+        
+        // ZECTUS ATTACK: If Zectus, get dynamic stats
+        if (pAbility.isZectusMainAttack) {
+            pAbility = getZectusCurrentAbility(gameState.player.baseStats.tri_sword_state);
+        }
+
+
+        // 2. Determine final coin counts
         const basePlayerCoins = (typeof pAbility.coins === 'number') ? pAbility.coins : 0;
         const baseEnemyCoins = (typeof eAbility.coins === 'number') ? eAbility.coins : 0;
         const pDice = (typeof pAbility.dice === 'number' && pAbility.dice > 0) ? pAbility.dice : 1;
         const eDice = (typeof eAbility.dice === 'number' && eAbility.dice > 0) ? eAbility.dice : 1;
         
-        // **STRIKER PASSIVE CALCULATION**
-        // Striker Passive (safely calculate bonus)
-        // Accessing consecutive_rounds is now safe due to full initialization in startNewGame
+        // Striker Passive: Coin Bonus
         const strikerBonus = (gameState.player.id === 'striker' && gameState.player.baseStats.consecutive_rounds > 0) 
             ? gameState.player.baseStats.consecutive_rounds 
             : 0;
 
-        // 2. Determine final coin counts
         const pCoins = basePlayerCoins + strikerBonus;
         const eCoins = baseEnemyCoins;
 
-
-        // Log parameters (now including Striker's bonus in PCoins)
         log(`DEBUG CLASH PARAMS: PCoins(${pCoins}) ECoins(${eCoins}) PDice(${pDice}) EDice(${eDice})`, 'log-debug'); 
 
-        // 3. Roll dice and coins
+        // --- 3. ROLL ---
         const playerRoll = rollDie(pDice);
         const enemyRoll = rollDie(eDice);
-        const playerCoinBonus = rollCoins(pCoins); // Use boosted pCoins
-        const enemyCoinBonus = rollCoins(eCoins); // Use base eCoins
+        const playerCoinBonus = rollCoins(pCoins); 
+        const enemyCoinBonus = rollCoins(eCoins); 
 
-        // Log rolls
         log(`DEBUG PLAYER ROLL: D${pDice} = ${playerRoll} | Coin Bonus(${pCoins}) = ${playerCoinBonus}`, 'log-debug');
         log(`DEBUG ENEMY ROLL: D${eDice} = ${enemyRoll} | Coin Bonus(${eCoins}) = ${enemyCoinBonus}`, 'log-debug');
 
@@ -546,10 +599,11 @@ function handleClash(pAbility, eAbility) {
         
         let winner, loser, winnerAbility, winnerCoinBonus, winnerDiceRoll;
 
-        // 5. Determine Winner (including Grapple check)
+        // --- 5. DETERMINE WINNER ---
         const isEnemyGrappled = gameState.enemy.baseStats.effects.includes('Grappled');
 
-        if (isEnemyGrappled) {
+        if (isEnemyGrappled && !isPiledriver) { 
+            // Grapple only auto-loses if the player didn't use Piledriver (which removes Grappled)
             winner = gameState.player;
             loser = gameState.enemy;
             winnerAbility = pAbility;
@@ -572,12 +626,8 @@ function handleClash(pAbility, eAbility) {
 
         log(`${winner.name} wins the clash!`, 'log-win');
 
-        // 6. Apply Damage
+        // --- 6. APPLY DAMAGE ---
         if (winnerAbility && typeof winnerAbility === 'object') {
-            // New debug log to confirm parameters before function call
-            log(`DEBUG APPLY DAMAGE PARAMS: Winner: ${winner.name}, Ability: ${winnerAbility.name}, CoinBonus: ${winnerCoinBonus}, DiceRoll: ${winnerDiceRoll}`, 'log-debug');
-
-            // Pass the winner's specific roll results
             applyDamage(winnerAbility, winner, loser, winnerCoinBonus, winnerDiceRoll); 
         } else {
             log(`Clash finished but winner ability was undefined or invalid. No damage applied.`, 'log-loss');
@@ -586,17 +636,22 @@ function handleClash(pAbility, eAbility) {
         // 7. Balter's "The Old One, Two" Passive
         if (winner.id === 'balter' && winner.uniquePassive.type === 'ClashWinBonus' && loser.baseStats.currentHP > 0) {
             const bonusDamageRoll = rollDie(winner.uniquePassive.dice);
-            // Apply loser's defense to the bonus hit
             const bonusDamage = Math.max(0, bonusDamageRoll - loser.baseStats.defense); 
             loser.baseStats.currentHP = Math.max(0, loser.baseStats.currentHP - bonusDamage);
             log(`Balter follows up with "The Old One, Two" for an extra ${bonusDamage} damage! (d${winner.uniquePassive.dice} roll: ${bonusDamageRoll})`, 'log-win');
         }
+        
+        // 8. Apply Stagger if the winning attack has that status effect
+        if (winnerAbility.statusEffect === 'Stagger') {
+            if (!Array.isArray(loser.baseStats.effects)) { loser.baseStats.effects = []; }
+            loser.baseStats.effects.push('Stagger');
+            log(`${loser.name} is **Staggered** and will skip their next turn!`, 'log-loss');
+        }
 
-        // 8. Debug log for successful resolution
+
         log(`DEBUG: Clash resolved successfully.`, 'log-debug');
         
     } catch (error) {
-        // This should now definitely catch any error if it occurs after the log in resolveCombatRound
         log(`CRITICAL CLASH ERROR: Clash resolution failed. Check console for details.`, 'log-loss');
         console.error("Clash resolution failed:", error);
     }
@@ -606,14 +661,10 @@ function handleClash(pAbility, eAbility) {
  * 4. Damage Application (called by Clash or Single Action)
  */
 function applyDamage(ability, attacker, target, coinBonus = rollCoins(ability.coins), diceRoll = rollDie(ability.dice)) {
-    // CRITICAL SAFETY CHECK: Ensure effects list is an array before using it
-    if (!Array.isArray(target.baseStats.effects)) {
-         target.baseStats.effects = [];
-         console.warn("CRITICAL: Target effects array was missing, reset to [].");
-    }
+    if (!Array.isArray(target.baseStats.effects)) { target.baseStats.effects = []; }
 
     // 1. Calculate base damage
-    let damage = (ability.baseAttack || 0) + (coinBonus || 0); // Safety check baseAttack/coinBonus
+    let damage = (ability.baseAttack || 0) + (coinBonus || 0); 
     
     // 2. Apply target defense reduction
     let finalDamage = Math.max(0, damage - target.baseStats.defense);
@@ -632,23 +683,20 @@ function applyDamage(ability, attacker, target, coinBonus = rollCoins(ability.co
     
     // 5. Update last damage taken for Chrono-Fist
     if (target.id === 'shutenmaru') {
-        // Accessing lastDamageTaken is now safe due to startNewGame initialization
         target.baseStats.lastDamageTaken = finalDamage; 
     }
     
     // 6. Apply Chrono-Fist (Shuten-Maru Passive Check)
     if (attacker.id === 'shutenmaru' && attacker.uniquePassive.type === 'RollTrigger' && diceRoll === attacker.uniquePassive.triggerValue) {
-        // Accessing lastDamageTaken is now safe due to startNewGame initialization
         const healAmount = target.baseStats.lastDamageTaken; 
         attacker.baseStats.currentHP = Math.min(attacker.baseStats.maxHP, attacker.baseStats.currentHP + healAmount);
         log(`Chrono-Fist triggered! Shuten-Maru heals back ${healAmount} damage.`, 'log-win');
     }
 
-    // 7. Apply Balter Piledriver cleanup
+    // 7. Apply Balter Piledriver cleanup (MUST be applied after damage if it was a Piledriver attack)
     if (ability.name === 'Piledriver' && ability.removesTargetStatus === 'Grappled') {
         target.baseStats.effects = target.baseStats.effects.filter(e => e !== 'Grappled');
         log(`${target.name} is released from the grapple.`, 'log-special');
-        // Accessing isGrappling is now safe due to startNewGame initialization
         attacker.baseStats.isGrappling = false;
     }
 }
@@ -658,23 +706,25 @@ function applyDamage(ability, attacker, target, coinBonus = rollCoins(ability.co
  * 5. End of Turn Cleanup & Setup for Next Turn
  */
 function endTurnCleanup() {
-    // Striker: Increase consecutive rounds
+    // 1. Clear Stagger effect for both player and enemy
+    gameState.player.baseStats.effects = gameState.player.baseStats.effects.filter(e => e !== 'Stagger');
+    gameState.enemy.baseStats.effects = gameState.enemy.baseStats.effects.filter(e => e !== 'Stagger');
+    
+    // 2. Striker: Increase consecutive rounds
     if (gameState.player.id === 'striker') {
-        // Accessing consecutive_rounds is now safe due to startNewGame initialization
         gameState.player.baseStats.consecutive_rounds++;
     }
 
-    // Check for death (redundant check, but safer)
     if (checkGameOver()) return;
 
-    // Reset actions for the next turn
+    // 3. Reset actions for the next turn
     gameState.playerAction = null;
     gameState.enemyAction = null;
     gameState.turn++;
     
     log(`--- Start of Turn ${gameState.turn} ---`, 'log-special');
 
-    // Re-render UI
+    // 4. Re-render UI
     updateCombatUI();
     renderCombatActions();
 }
@@ -683,7 +733,6 @@ function endTurnCleanup() {
  * Checks for a winner/loser and displays the game over screen.
  */
 function checkGameOver() {
-    // CRITICAL FIX: Update the UI one last time to reflect the defeat status
     updateCombatUI(); 
     
     if (gameState.player.baseStats.currentHP <= 0) {
@@ -709,56 +758,56 @@ function checkGameOver() {
 function renderCombatActions() {
     actionButtonsDiv.innerHTML = '';
     const playerAbilities = gameState.player.abilities;
-    // FIX: Removed accidental double access "gameState.gameState"
-    const isGrappling = gameState.enemy.baseStats.effects.includes('Grappled'); 
+    const isEnemyGrappled = gameState.enemy.baseStats.effects.includes('Grappled'); 
     const currentWeapon = gameState.player.baseStats.tri_sword_state; 
-
-    playerAbilities.forEach(ability => {
-        let isAvailable = true;
-        let displayName = ability.name;
-        let isZectusAttack = false;
-
-        // Balter's conditional abilities
+    
+    // Filter out hidden abilities (Balter's Piledriver definition, Zectus's 3 Tri-Sword definitions)
+    const renderableAbilities = playerAbilities.filter(ability => {
+        // Balter's Grapple/Piledriver logic
         if (gameState.player.id === 'balter') {
+            const isGrapple = ability.name === 'Grapple';
             const isPiledriver = ability.name === 'Piledriver';
             
-            // Piledriver is hidden if not grappling
-            if (isPiledriver && !isGrappling) {
-                isAvailable = false;
-            } else if (isPiledriver) {
-                displayName = 'Piledriver (FINISHER!)'; 
-            }
-        }
-        
-        // Zectus's abilities
-        if (gameState.player.id === 'zectus' && ability.type === 'ATTACK') {
-            isZectusAttack = true;
-            displayName = `Tri-Sword: ${ability.weaponState}`;
-        }
-        
-        // Hide abilities only if they have isHidden AND aren't overridden above (like Piledriver)
-        if (ability.isHidden && !isZectusAttack && ability.name !== 'Piledriver') {
-            isAvailable = false;
+            // Only render Grapple if enemy is NOT grappled, or Piledriver if enemy IS grappled.
+            if (isGrapple && isEnemyGrappled) return false;
+            if (isPiledriver && !isEnemyGrappled) return false;
+            if (isPiledriver || isGrapple) return true;
         }
 
-        
-        if (isAvailable) {
-            const btn = document.createElement('button');
-            btn.classList.add('combat-btn');
-            btn.textContent = displayName;
-            
-            // Highlight Zectus's current weapon
-            if (isZectusAttack && ability.weaponState === currentWeapon) {
-                btn.classList.add('active-weapon-btn'); 
-                // Set a strong contrasting style for the active weapon
-                btn.style.borderColor = 'var(--hp-color)';
-                btn.style.borderWidth = '3px';
-                btn.style.boxShadow = '0 0 10px var(--hp-color)';
-            }
-            
-            btn.onclick = () => executeAbility(ability);
-            actionButtonsDiv.appendChild(btn);
+        // Zectus's Tri-Sword logic: only show the combined attack button
+        if (gameState.player.id === 'zectus') {
+             if (ability.isZectusMainAttack || ability.name === 'Cycle') return true;
+             // Hide the individual Tri-Sword definitions
+             if (ability.name.startsWith('Tri-Sword:')) return false;
         }
+
+        return !ability.isHidden;
+    });
+
+    renderableAbilities.forEach(ability => {
+        const btn = document.createElement('button');
+        btn.classList.add('combat-btn');
+        let displayName = ability.name;
+
+        // Balter's dynamic button label
+        if (gameState.player.id === 'balter' && ability.name === 'Piledriver') {
+            displayName = 'Piledriver (FINISHER!)'; 
+        }
+        
+        // Zectus's dynamic button label and active state
+        if (gameState.player.id === 'zectus' && ability.isZectusMainAttack) {
+            displayName = `Tri-Sword: ${currentWeapon}`;
+            
+            // Highlight the current attack button
+            btn.classList.add('active-weapon-btn'); 
+            btn.style.borderColor = 'var(--hp-color)';
+            btn.style.borderWidth = '3px';
+            btn.style.boxShadow = '0 0 10px var(--hp-color)';
+        }
+
+        btn.textContent = displayName;
+        btn.onclick = () => executeAbility(ability);
+        actionButtonsDiv.appendChild(btn);
     });
 }
 
