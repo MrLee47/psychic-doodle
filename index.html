@@ -556,31 +556,26 @@ function log(message, className = '') {
 /**
  * NEW: Function to simulate a slot machine spin for dice/coins.
  */
-function runSlotAnimation(elementId, maxVal, isCoin) {
-    const slotElement = document.getElementById(elementId);
-    if (!slotElement) return null;
-
+function runSlotAnimation(element, maxVal, isCoin) {
     let interval;
-    const animationStart = performance.now();
-    // Spin duration increased from 2000ms to 3000ms
-    const duration = 3000; 
+    const startTime = performance.now();
+    const duration = 3000; // 3 seconds for animation
 
-    const spin = () => {
-        if (performance.now() - animationStart < duration) {
-            let randomValue;
+    interval = setInterval(() => {
+        if (performance.now() - startTime < duration) {
             if (isCoin) {
-                // For coins, just cycle between head and tail emojis
-                randomValue = Math.random() > 0.5 ? '🥇' : '🥈';
+                // Show GIF during spin
+                element.src = 'images/coin-flip.gif';
             } else {
-                // For dice, cycle through random numbers up to maxVal
-                randomValue = rollDie(maxVal);
+                // Show dice face as number
+                element.src = `images/dice${rollDie(maxVal)}.png`;
             }
-            slotElement.textContent = randomValue;
         } else {
             clearInterval(interval);
         }
-    };
-
+    }, 50);
+    return interval;
+}
     // Start a fast interval to change numbers
     interval = setInterval(spin, 50);
     return interval; // Return the interval ID so it can be stopped later
@@ -591,72 +586,87 @@ function runSlotAnimation(elementId, maxVal, isCoin) {
  */
 function startClashVisuals(pDiceMax, pCoins, eDiceMax, eCoins, pFinalRoll, pFinalCoin, eFinalRoll, eFinalCoin) {
     return new Promise(resolve => {
+        // Show clash overlay
         clashVisualizer.classList.remove('hidden');
         clashVisualizer.classList.add('flex');
-        
-        const coinEmoji = (count, result) => {
-            if (count === 0) return '(No Coins)';
-            // Show result: Gold for win (1 point), Silver for loss (0 points)
-            return Array(count).fill('🪙').map((c, i) => i < result ? '🥇' : '🥈').join('');
-        };
 
-        // Generate the visual content with dedicated slot IDs
+        // Clear previous content
         clashVisualizer.innerHTML = `
             <div class="text-4xl font-bold mb-8 text-accent-color animate-pulse">CLASH!</div>
             <div class="flex justify-around w-full max-w-lg">
                 <div class="text-center space-y-4 clash-card">
                     <p class="text-xl font-semibold">${gameState.player.name}</p>
-                    <div id="p-dice-box" class="clash-dice-box bg-red-800">
-                        <span id="p-${clashDiceSlotId}" class="text-7xl dice-slot-digit text-white">?</span>
-                    </div>
-                    <p class="text-2xl" id="p-${clashCoinSlotId}"></p>
+                    <img id="player-dice" src="images/dice1.png" class="clash-dice-box" width="80" height="80"/>
+                    <p class="text-2xl" id="player-coin"></p>
                 </div>
                 <div class="text-center space-y-4 clash-card">
                     <p class="text-xl font-semibold">${gameState.enemy.name}</p>
-                    <div id="e-dice-box" class="clash-dice-box bg-blue-800">
-                        <span id="e-${clashDiceSlotId}" class="text-7xl dice-slot-digit text-white">?</span>
-                    </div>
-                    <p class="text-2xl" id="e-${clashCoinSlotId}"></p>
+                    <img id="enemy-dice" src="images/dice1.png" class="clash-dice-box" width="80" height="80"/>
+                    <p class="text-2xl" id="enemy-coin"></p>
                 </div>
             </div>
             <p class="mt-8 text-xl">Rolling...</p>
         `;
 
-        // 1. Start slot animations
-        const pDiceInterval = runSlotAnimation(`p-${clashDiceSlotId}`, pDiceMax, false);
-        const eDiceInterval = runSlotAnimation(`e-${clashDiceSlotId}`, eDiceMax, false);
-        
-        const pCoinInterval = runSlotAnimation(`p-${clashCoinSlotId}`, pCoins, true);
-        const eCoinInterval = runSlotAnimation(`e-${clashCoinSlotId}`, eCoins, true);
+        // Get the image elements
+        const pDiceImg = document.getElementById('player-dice');
+        const eDiceImg = document.getElementById('enemy-dice');
 
+        // Animate dice
+        const pDiceInterval = runSlotAnimation(pDiceImg, pDiceMax, false);
+        const eDiceInterval = runSlotAnimation(eDiceImg, eDiceMax, false);
 
-        // 2. Wait for 3 seconds (increased), then stop and display final results
+        // Animate coins (use the <p> elements to show GIF)
+        const pCoinP = document.getElementById('player-coin');
+        const eCoinP = document.getElementById('enemy-coin');
+
+        // For coins, create dummy elements to animate
+        // We'll replace innerHTML with the GIF during spin
+        const pCoinImg = document.createElement('img');
+        pCoinImg.src = 'images/coin-flip.gif';
+        pCoinImg.width = 80;
+        pCoinImg.height = 80;
+
+        const eCoinImg = document.createElement('img');
+        eCoinImg.src = 'images/coin-flip.gif';
+        eCoinImg.width = 80;
+        eCoinImg.height = 80;
+
+        // Insert GIF into the <p> elements
+        pCoinP.innerHTML = '';
+        pCoinP.appendChild(pCoinImg);
+        eCoinP.innerHTML = '';
+        eCoinP.appendChild(eCoinImg);
+
+        // Animate coins
+        const pCoinInterval = runSlotAnimation(pCoinImg, pCoins, true);
+        const eCoinInterval = runSlotAnimation(eCoinImg, eCoins, true);
+
+        // After 3 seconds, stop animations and show final results
         setTimeout(() => {
             clearInterval(pDiceInterval);
             clearInterval(eDiceInterval);
             clearInterval(pCoinInterval);
             clearInterval(eCoinInterval);
 
-            // Update with final values
-            document.getElementById(`p-${clashDiceSlotId}`).textContent = pFinalRoll;
-            document.getElementById(`e-${clashDiceSlotId}`).textContent = eFinalRoll;
-            document.getElementById(`p-${clashCoinSlotId}`).innerHTML = coinEmoji(pCoins, pFinalCoin);
-            document.getElementById(`e-${clashCoinSlotId}`).innerHTML = coinEmoji(eCoins, eFinalCoin);
-            
-            // Update context
-            clashVisualizer.querySelector('p.mt-8').textContent = 'Results are in! (Closing in 1s)';
+            // Set final dice images
+            pDiceImg.src = `images/dice${pFinalRoll}.png`;
+            eDiceImg.src = `images/dice${eFinalRoll}.png`;
 
-            // 3. Wait 1 second (increased) for final result display before returning
+            // Show final coin emojis
+            pCoinP.innerHTML = coinEmoji(pCoins, pFinalCoin);
+            eCoinP.innerHTML = coinEmoji(eCoins, eFinalCoin);
+
+            // Show results for 1 second then hide
+            document.querySelector('p.mt-8').textContent = 'Results are in! (Closing in 1s)';
             setTimeout(() => {
                 clashVisualizer.classList.add('hidden');
                 clashVisualizer.classList.remove('flex');
                 resolve();
-            }, 1000); // Total animation time is 4.0 seconds (3s spin + 1s pause)
-
-        }, 3000); 
+            }, 1000);
+        }, 3000);
     });
 }
-
 // --- THEME & SETTINGS LOGIC (Simplified) ---
 
 function applyTheme(themeName) {
