@@ -1,134 +1,196 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>The Game: Erebos</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>The Game: Erebos</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body class="default-theme">
-    <!-- SETTINGS PANEL -->
-    <div id="settings-panel" class="settings-panel hidden" aria-hidden="true" role="dialog" aria-label="Settings">
-        <button id="close-settings-btn" class="close-btn" aria-label="Close settings">✕</button>
-        <div class="theme-selector">
-            <h3>Theme Selection</h3>
-            <button data-theme="default" class="theme-option-btn">Default</button>
-            <button data-theme="retro" class="theme-option-btn" disabled>Retro (WIP)</button>
-            <button data-theme="dark" class="theme-option-btn" disabled>Dark (WIP)</button>
-            <button data-theme="light" class="theme-option-btn" disabled>Light (WIP)</button>
+
+  <!-- SETTINGS PANEL (Hidden by default) -->
+  <div id="settings-panel" class="settings-panel hidden" aria-hidden="true" role="dialog" aria-label="Settings">
+    <button id="close-settings-btn" class="close-btn" aria-label="Close settings">✕</button>
+    <div class="theme-selector">
+      <h3>Theme Selection</h3>
+      <button data-theme="default" class="theme-option-btn">Default</button>
+      <button data-theme="retro" class="theme-option-btn" disabled>Retro (WIP)</button>
+      <button data-theme="dark" class="theme-option-btn" disabled>Dark (WIP)</button>
+      <button data-theme="light" class="theme-option-btn" disabled>Light (WIP)</button>
+    </div>
+  </div>
+
+  <!-- MAIN MENU SCREEN -->
+  <div id="menu-screen" class="flex flex-col items-center justify-center space-y-6 hidden min-h-screen">
+    <h1 class="text-5xl font-bold mb-8 text-accent-color">The Game</h1>
+    <button id="new-game-btn" class="action-btn w-64">New Game</button>
+    <button id="load-game-btn" class="action-btn w-64" disabled>Load Game (WIP)</button>
+    <button id="open-settings-menu-btn" class="action-btn w-64">Settings</button>
+  </div>
+
+  <!-- CHARACTER SELECT SCREEN -->
+  <div id="character-select-screen" class="hidden w-full max-w-4xl">
+    <h2 class="text-3xl font-bold mb-6 text-center text-accent-color">Select Your Hero</h2>
+    <div id="character-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Character Cards Render Here -->
+    </div>
+    <div class="mt-8 text-center">
+      <button id="start-combat-btn" class="action-btn text-xl hidden">Begin the Adventure!</button>
+    </div>
+  </div>
+
+  <!-- MAIN GAME WRAPPER (merged compressed layout + original game UI IDs) -->
+  <!-- NOTE: We keep the original IDs (main-game-wrapper, game-container, player-status-card, etc.)
+       so main.js continues to work. CSS class app-grid (from style.css) will compress layout. -->
+  <div id="main-game-wrapper" class="hidden app-grid">
+
+    <!-- Top header (area + room progress + compact portrait) -->
+    <header class="header-box" style="grid-column: 1 / -1;">
+      <div class="area-info">
+        <div>
+          <div id="area-display" class="area-name">Area: Erebos</div>
+          <div id="room-progress-display" class="room-progress">Room 1/6</div>
         </div>
-    </div>
+        <div id="room-desc" class="room-desc">The chamber feels cold and still.</div>
+      </div>
 
-    <!-- MAIN UI (no page-level scrolling intended) -->
-    <div id="app-root" class="app-grid">
-
-        <!-- Top Header: Area + Room (compact) -->
-        <header id="top-header" class="header-box">
-            <div id="area-info" class="area-info">
-                <div>
-                    <div id="area-display" class="area-name">Area: Erebos</div>
-                    <div id="room-progress-display" class="room-progress">Room 1/6</div>
-                </div>
-                <div id="room-desc" class="room-desc">The chamber feels cold and still.</div>
-            </div>
-
-            <!-- Your Character quick UI -->
-            <div class="player-quick">
-                <div id="player-portrait" class="portrait" aria-hidden="false" role="img" aria-label="Player portrait">
-                    <!-- portrait image or emoji will be injected here -->
-                    <img id="player-portrait-img" src="" alt="Player portrait" />
-                </div>
-                <div class="player-quick-info">
-                    <div id="player-name" class="player-name">Player Name</div>
-                    <div class="hp-small">
-                        <div class="hp-small-bar-bg">
-                            <div id="player-hp-bar" class="hp-small-bar" style="width: 100%;"></div>
-                        </div>
-                        <div class="hp-small-text"><span id="player-hp-text">100/100</span></div>
-                    </div>
-                </div>
-
-                <div class="player-actions">
-                    <button id="abilities-info-btn" class="action-btn" aria-haspopup="dialog" aria-controls="abilities-modal">Abilities</button>
-                    <button id="open-settings-menu-btn" class="action-btn">Settings</button>
-                </div>
-            </div>
-        </header>
-
-        <!-- Main visual & enemy status column -->
-        <section id="visuals-column" class="visuals-column">
-            <!-- Enemy status moved above the visual area -->
-            <div id="enemy-status-card" class="enemy-status-card hidden" aria-live="polite">
-                <div class="enemy-header">
-                    <div id="enemy-name" class="enemy-name">Enemy Name</div>
-                    <div class="enemy-hp-mini">
-                        <div class="enemy-hp-bg">
-                            <div id="enemy-hp-bar" class="enemy-hp-bar" style="width: 100%;"></div>
-                        </div>
-                        <div class="enemy-hp-text"><span id="enemy-hp-text">100/100</span></div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="animation-slot" class="animation-slot">
-                <div class="sprites">
-                    <div id="player-sprite" class="sprite">
-                        <span id="player-sprite-emoji" class="sprite-emoji">🛡️</span>
-                        <p id="player-sprite-name" class="sprite-name">Hero</p>
-                    </div>
-                    <div id="enemy-sprite" class="sprite hidden">
-                        <span id="enemy-sprite-emoji" class="sprite-emoji">👾</span>
-                        <p id="enemy-sprite-name" class="sprite-name">Enemy</p>
-                    </div>
-                </div>
-                <p id="visual-context" class="visual-context">Ready to fight.</p>
-
-                <!-- Clash visualizer overlay -->
-                <div id="clash-visualizer" class="clash-visualizer hidden" aria-hidden="true" role="dialog" aria-label="Clash Visuals"></div>
-            </div>
-        </section>
-
-        <!-- Right sidebar: compact vertical log -->
-        <aside id="side-log" class="side-log" role="region" aria-label="Event log">
-            <h3 class="sr-only">Event Log</h3>
-            <div id="log-scroll-container" class="log-scroll">
-                <div id="combat-log" class="combat-log" aria-live="polite"></div>
-            </div>
-        </aside>
-
-        <!-- Bottom: Actions + Inventory (combined) -->
-        <footer id="bottom-panel" class="bottom-panel">
-            <div class="actions-inventory">
-                <div id="action-block" class="action-block">
-                    <h4 id="action-header" class="action-header">Actions</h4>
-                    <div id="action-buttons" class="action-buttons grid"></div>
-                </div>
-
-                <div id="inventory-block" class="inventory-block">
-                    <h4 class="inventory-title">Inventory</h4>
-                    <ul id="inventory-list" class="inventory-list">
-                        <li class="text-muted">No items found yet.</li>
-                    </ul>
-                </div>
-            </div>
-        </footer>
-    </div>
-
-    <!-- Ability tooltip (shown on hover) -->
-    <div id="ability-tooltip" class="ability-tooltip hidden" role="tooltip" aria-hidden="true"></div>
-
-    <!-- Abilities modal (detailed list) -->
-    <div id="abilities-modal" class="modal hidden" role="dialog" aria-hidden="true" aria-label="Abilities">
-        <div class="modal-content">
-            <button id="close-abilities-modal" class="close-btn" aria-label="Close abilities">✕</button>
-            <h2>Abilities</h2>
-            <div id="abilities-list" class="abilities-list"></div>
+      <!-- Compact player portrait + small HP (keeps original IDs in sync below) -->
+      <div class="player-quick">
+        <div id="player-portrait" class="portrait" role="img" aria-label="Player portrait">
+          <img id="player-portrait-img" src="" alt="Player portrait" />
         </div>
-    </div>
+        <div class="player-quick-info">
+          <div id="player-name" class="player-name">Player Name</div>
+          <div class="hp-small">
+            <div class="hp-small-bar-bg">
+              <!-- This is an additional small HP bar for header visuals; primary bar used by game logic is still #player-hp-bar below -->
+              <div id="player-hp-mini" class="hp-small-bar" style="width:100%"></div>
+            </div>
+            <div class="hp-small-text"><span id="player-hp-mini-text">100/100</span></div>
+          </div>
+        </div>
 
-    <script src="main.js"></script>
-    <script src="ui-enhancements.js"></script>
+        <div class="player-actions">
+          <button id="abilities-info-btn" class="action-btn" aria-haspopup="dialog" aria-controls="abilities-modal">Abilities</button>
+          <button id="open-settings-menu-btn-2" class="action-btn">Settings</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Left: Visuals + enemy status -->
+    <section id="visuals-panel" class="visuals-column">
+      <!-- Enemy status moved above the visual area (single element referenced by main.js) -->
+      <div id="enemy-status-card" class="enemy-status-card hidden" aria-live="polite">
+        <div class="enemy-header">
+          <div id="enemy-name" class="enemy-name">Enemy Name</div>
+          <div class="enemy-hp-mini">
+            <div class="enemy-hp-bg">
+              <div id="enemy-hp-bar" class="enemy-hp-bar" style="width:100%"></div>
+            </div>
+            <div class="enemy-hp-text"><span id="enemy-hp-text">100/100</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Animation slot -->
+      <div id="animation-slot" class="animation-slot">
+        <div class="sprites">
+          <div id="player-sprite" class="sprite">
+            <span id="player-sprite-emoji" class="sprite-emoji">🛡️</span>
+            <p id="player-sprite-name" class="sprite-name">Hero</p>
+          </div>
+          <div id="enemy-sprite" class="sprite hidden">
+            <span id="enemy-sprite-emoji" class="sprite-emoji">👾</span>
+            <p id="enemy-sprite-name" class="sprite-name">Enemy</p>
+          </div>
+        </div>
+        <p id="visual-context" class="visual-context">Ready to fight.</p>
+
+        <!-- Clash visualizer overlay (same id used by main.js) -->
+        <div id="clash-visualizer" class="clash-visualizer hidden" aria-hidden="true" role="dialog" aria-label="Clash Visuals"></div>
+      </div>
+    </section>
+
+    <!-- Right: Game container (status bars, dialogue, actions, inventory) -->
+    <div id="game-container" class="visuals-column" style="display:flex;flex-direction:column;gap:12px;">
+
+      <!-- Status Bars & Header (keeps original player-status-card id expected by main.js) -->
+      <div id="status-bars" class="space-y-4" style="display:flex;flex-direction:column;gap:8px;">
+        <div id="player-status-card" class="section-box p-4 space-y-2" style="min-width:220px;">
+          <h3 id="player-name-alt" class="text-xl font-bold text-accent-color" style="display:none;">Player Name (alt)</h3>
+          <!-- Primary HP bar used by game logic -->
+          <div id="player-hp-container" style="height:18px;background:#f3f4f6;border-radius:999px;overflow:hidden;border:1px solid #e5e7eb;">
+            <div id="player-hp-bar" class="hp-bar-inner" style="width:100%;height:100%;"></div>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span id="player-hp-text">100/100</span>
+            <span id="player-status-text">Alive</span>
+          </div>
+        </div>
+        <!-- enemy-status-card exists above visuals-panel - keep this one hidden to avoid duplication -->
+      </div>
+
+      <!-- Room Info Card (keeps original ids used by main.js) -->
+      <div id="room-info-card" class="section-box p-4 flex justify-between font-semibold border-b border-gray-300 pb-2">
+        <span id="area-display-alt" class="text-accent-color" style="display:none;">Area: Erebos</span>
+        <span id="room-progress-display-alt" class="text-gray-600" style="display:none;">Room 1/6</span>
+        <div id="room-info-compact" style="font-weight:600;">Area: Erebos — Room 1/6</div>
+      </div>
+
+      <!-- Dialogue -->
+      <div class="section-box p-4">
+        <p id="dialogue-text" class="text-lg italic">Welcome to the adventure!</p>
+      </div>
+
+      <!-- Actions + Inventory (compact bottom area inside game-container) -->
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="flex:2;">
+          <div class="section-box p-4">
+            <h3 id="action-header" class="text-2xl font-bold text-accent-color border-b border-gray-300 pb-2">Actions</h3>
+            <div id="action-buttons" class="action-buttons grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;"></div>
+            <button id="pass-turn-btn" class="action-btn w-full hidden" style="margin-top:10px;">Pass Turn</button>
+          </div>
+        </div>
+
+        <div style="flex:1;min-width:200px;max-width:260px;">
+          <div class="section-box p-4">
+            <h4 class="inventory-title">Inventory</h4>
+            <ul id="inventory-list" class="inventory-list">
+              <li class="text-muted">No items found yet.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div> <!-- end game-container -->
+
+    <!-- Right sidebar: event log (keeps original ids) -->
+    <aside id="side-log" class="side-log" role="region" aria-label="Event log">
+      <h3 class="sr-only">Event Log</h3>
+      <div id="log-scroll-container" class="log-scroll" style="overflow-y:auto;">
+        <div id="combat-log" class="combat-log" aria-live="polite"></div>
+      </div>
+    </aside>
+
+  </div> <!-- end main-game-wrapper -->
+
+  <!-- Ability tooltip (shown on hover) -->
+  <div id="ability-tooltip" class="ability-tooltip hidden" role="tooltip" aria-hidden="true"></div>
+
+  <!-- Abilities modal (detailed list) -->
+  <div id="abilities-modal" class="modal hidden" role="dialog" aria-hidden="true" aria-label="Abilities">
+    <div class="modal-content">
+      <button id="close-abilities-modal" class="close-btn" aria-label="Close abilities">✕</button>
+      <h2>Abilities</h2>
+      <div id="abilities-list" class="abilities-list"></div>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  <!-- main.js is expected to exist in the repo and uses the DOM IDs above -->
+  <script src="main.js"></script>
+  <script src="ui-enhancements.js"></script>
 </body>
 </html>
