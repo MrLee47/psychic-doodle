@@ -46,7 +46,7 @@
        so main.js continues to work. CSS class app-grid (from style.css) will compress layout. -->
   <div id="main-game-wrapper" class="hidden app-grid">
 
-    <!-- Top header (area + room progress + compact portrait) -->
+    <!-- Top header (area + room progress + compact portrait + quick action buttons) -->
     <header class="header-box" style="grid-column: 1 / -1;">
       <div class="area-info">
         <div>
@@ -65,7 +65,7 @@
           <div id="player-name" class="player-name">Player Name</div>
           <div class="hp-small">
             <div class="hp-small-bar-bg">
-              <!-- This is an additional small HP bar for header visuals; primary bar used by game logic is still #player-hp-bar below -->
+              <!-- Visual mini bar; main HP bar used by game logic remains #player-hp-bar -->
               <div id="player-hp-mini" class="hp-small-bar" style="width:100%"></div>
             </div>
             <div class="hp-small-text"><span id="player-hp-mini-text">100/100</span></div>
@@ -74,6 +74,8 @@
 
         <div class="player-actions">
           <button id="abilities-info-btn" class="action-btn" aria-haspopup="dialog" aria-controls="abilities-modal">Abilities</button>
+          <button id="open-character-select-btn" class="action-btn" title="Choose a different hero">Choose Hero</button>
+          <button id="back-to-menu-btn" class="action-btn" title="Back to main menu">Menu</button>
           <button id="open-settings-menu-btn-2" class="action-btn">Settings</button>
         </div>
       </div>
@@ -192,5 +194,56 @@
   <!-- main.js is expected to exist in the repo and uses the DOM IDs above -->
   <script src="main.js"></script>
   <script src="ui-enhancements.js"></script>
+
+  <!-- Small wiring to restore menu/character-select buttons and ensure flows work -->
+  <script>
+    // Wait until setView exists
+    function wireQuickControls() {
+      // Menu button inside in-game header
+      const backBtn = document.getElementById('back-to-menu-btn');
+      if (backBtn && typeof setView === 'function') {
+        backBtn.addEventListener('click', () => {
+          setView('menu');
+        });
+      }
+
+      const chooseHeroBtn = document.getElementById('open-character-select-btn');
+      if (chooseHeroBtn && typeof setView === 'function') {
+        chooseHeroBtn.addEventListener('click', () => {
+          setView('select');
+        });
+      }
+
+      // Ensure the in-menu settings button uses existing toggle
+      const openSettingsInHeader = document.getElementById('open-settings-menu-btn-2');
+      if (openSettingsInHeader) {
+        openSettingsInHeader.addEventListener('click', () => {
+          // Try to reuse existing toggle; fallback to toggling panel class
+          if (typeof toggleSettingsPanel === 'function') {
+            toggleSettingsPanel();
+          } else {
+            const panel = document.getElementById('settings-panel');
+            if (panel) panel.classList.toggle('hidden');
+          }
+        });
+      }
+    }
+
+    // If setView isn't available yet, keep trying briefly
+    if (typeof setView === 'function') {
+      wireQuickControls();
+    } else {
+      let attempts = 0;
+      const t = setInterval(() => {
+        attempts++;
+        if (typeof setView === 'function') {
+          wireQuickControls();
+          clearInterval(t);
+        } else if (attempts > 20) {
+          clearInterval(t);
+        }
+      }, 100);
+    }
+  </script>
 </body>
 </html>
