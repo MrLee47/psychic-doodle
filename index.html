@@ -22,29 +22,29 @@
     </div>
   </div>
 
-  <!-- MAIN MENU SCREEN -->
-  <div id="menu-screen" class="flex flex-col items-center justify-center space-y-6 hidden min-h-screen">
-    <h1 class="text-5xl font-bold mb-8 text-accent-color">The Game</h1>
+  <!-- MAIN MENU SCREEN (first screen shown) -->
+  <div id="menu-screen" class="flex flex-col items-center justify-center space-y-6 hidden min-h-screen" role="main" aria-labelledby="menu-title">
+    <h1 id="menu-title" class="text-5xl font-bold mb-8 text-accent-color">The Game</h1>
     <button id="new-game-btn" class="action-btn w-64">New Game</button>
     <button id="load-game-btn" class="action-btn w-64" disabled>Load Game (WIP)</button>
     <button id="open-settings-menu-btn" class="action-btn w-64">Settings</button>
   </div>
 
-  <!-- CHARACTER SELECT SCREEN -->
-  <div id="character-select-screen" class="hidden w-full max-w-4xl">
-    <h2 class="text-3xl font-bold mb-6 text-center text-accent-color">Select Your Hero</h2>
-    <div id="character-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+  <!-- CHARACTER SELECT SCREEN (separate screen before game) -->
+  <div id="character-select-screen" class="hidden w-full max-w-4xl" role="dialog" aria-labelledby="select-title">
+    <h2 id="select-title" class="text-3xl font-bold mb-6 text-center text-accent-color">Select Your Hero</h2>
+    <div id="character-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" role="list">
       <!-- Character Cards Render Here -->
     </div>
     <div class="mt-8 text-center">
+      <!-- Start button only appears after selecting a character -->
       <button id="start-combat-btn" class="action-btn text-xl hidden">Begin the Adventure!</button>
+      <button id="back-to-menu-from-select" class="action-btn ml-2">Back</button>
     </div>
   </div>
 
-  <!-- MAIN GAME WRAPPER (merged compressed layout + original game UI IDs) -->
-  <!-- NOTE: We keep the original IDs (main-game-wrapper, game-container, player-status-card, etc.)
-       so main.js continues to work. CSS class app-grid (from style.css) will compress layout. -->
-  <div id="main-game-wrapper" class="hidden app-grid">
+  <!-- MAIN GAME WRAPPER (hidden until after character selection) -->
+  <div id="main-game-wrapper" class="hidden app-grid" role="application" aria-hidden="true">
 
     <!-- Top header (area + room progress + compact portrait + quick action buttons) -->
     <header class="header-box" style="grid-column: 1 / -1;">
@@ -191,34 +191,33 @@
   </div>
 
   <!-- SCRIPTS -->
-  <!-- main.js is expected to exist in the repo and uses the DOM IDs above -->
   <script src="main.js"></script>
   <script src="ui-enhancements.js"></script>
 
-  <!-- Small wiring to restore menu/character-select buttons and ensure flows work -->
+  <!-- Small wiring to restore menu/character-select flows and header buttons -->
   <script>
-    // Wait until setView exists
-    function wireQuickControls() {
-      // Menu button inside in-game header
+    // Attach header buttons to existing view functions and ensure character selection flows behave
+    function wireHeaderAndSelection() {
+      // Back to menu (header)
       const backBtn = document.getElementById('back-to-menu-btn');
-      if (backBtn && typeof setView === 'function') {
-        backBtn.addEventListener('click', () => {
-          setView('menu');
-        });
-      }
+      if (backBtn) backBtn.addEventListener('click', () => setView('menu'));
 
+      // Open character select from header
       const chooseHeroBtn = document.getElementById('open-character-select-btn');
-      if (chooseHeroBtn && typeof setView === 'function') {
-        chooseHeroBtn.addEventListener('click', () => {
-          setView('select');
-        });
-      }
+      if (chooseHeroBtn) chooseHeroBtn.addEventListener('click', () => setView('select'));
 
-      // Ensure the in-menu settings button uses existing toggle
-      const openSettingsInHeader = document.getElementById('open-settings-menu-btn-2');
-      if (openSettingsInHeader) {
-        openSettingsInHeader.addEventListener('click', () => {
-          // Try to reuse existing toggle; fallback to toggling panel class
+      // Back to menu from selection screen
+      const backFromSelect = document.getElementById('back-to-menu-from-select');
+      if (backFromSelect) backFromSelect.addEventListener('click', () => setView('menu'));
+
+      // Ensure menu's new game opens the select screen (main.js init already does this; this is a safety hookup)
+      const newGameBtn = document.getElementById('new-game-btn');
+      if (newGameBtn) newGameBtn.addEventListener('click', () => setView('select'));
+
+      // Settings button in header reuse existing toggle
+      const openSettingsHeader = document.getElementById('open-settings-menu-btn-2');
+      if (openSettingsHeader) {
+        openSettingsHeader.addEventListener('click', () => {
           if (typeof toggleSettingsPanel === 'function') {
             toggleSettingsPanel();
           } else {
@@ -229,18 +228,18 @@
       }
     }
 
-    // If setView isn't available yet, keep trying briefly
+    // Try to wire after main.js loads
     if (typeof setView === 'function') {
-      wireQuickControls();
+      wireHeaderAndSelection();
     } else {
       let attempts = 0;
-      const t = setInterval(() => {
+      const id = setInterval(() => {
         attempts++;
         if (typeof setView === 'function') {
-          wireQuickControls();
-          clearInterval(t);
-        } else if (attempts > 20) {
-          clearInterval(t);
+          clearInterval(id);
+          wireHeaderAndSelection();
+        } else if (attempts > 30) {
+          clearInterval(id);
         }
       }, 100);
     }

@@ -1,6 +1,3 @@
-// UI Enhancements: ability tooltip, abilities modal, portrait updates, and helpers.
-// Load this after main.js so it can access gameState and the UI elements.
-
 (function () {
   const abilitiesTooltip = document.getElementById('ability-tooltip');
   const abilitiesModal = document.getElementById('abilities-modal');
@@ -17,7 +14,6 @@
     abilitiesTooltip.classList.remove('hidden');
     abilitiesTooltip.setAttribute('aria-hidden', 'false');
 
-    // position above element, fallback below if insufficient space
     const rect = targetEl.getBoundingClientRect();
     const tooltipRect = abilitiesTooltip.getBoundingClientRect();
     let top = rect.top - tooltipRect.height - 8;
@@ -41,7 +37,6 @@
     allAbilities.forEach(ab => {
       const container = document.createElement('div');
       container.className = 'ability-entry';
-      // ensure description exists for readability
       const desc = ab.description || `${ab.type || ''} ${ab.baseAttack ? `— base ${ab.baseAttack}` : ''}`;
       container.innerHTML = `<strong>${ab.name}</strong><div class="ability-desc" style="margin-top:6px">${desc}</div>`;
       abilitiesListEl.appendChild(container);
@@ -81,7 +76,6 @@
     const max = entity.baseStats.maxHP || 1;
     const pct = Math.max(0, Math.min(1, hp / max));
 
-    // Clear classes
     playerPortrait.classList.remove('portrait-damaged-1','portrait-damaged-2','portrait-dead');
     if (pct <= 0) {
       playerPortrait.classList.add('portrait-dead');
@@ -92,20 +86,17 @@
       playerPortrait.classList.add('portrait-damaged-1');
     }
 
-    // If entity has portrait path, show it; otherwise show emoji
     if (entity.portrait) {
       playerPortraitImg.src = entity.portrait;
       playerPortraitImg.style.display = 'block';
       playerPortrait.innerText = '';
     } else {
       playerPortraitImg.style.display = 'none';
-      // fallback emoji based on class or default
       const emoji = (entity.id === 'striker') ? '🥷' : '🛡️';
       playerPortrait.innerText = emoji;
     }
   }
 
-  // Expose helpers for main.js to use when constructing action buttons
   window.UIEnhancements = {
     attachAbilityHoverHandlers,
     updatePortraitBasedOnHP,
@@ -113,7 +104,6 @@
     closeAbilitiesModal
   };
 
-  // If updateCombatUI is defined after main.js runs, try to wrap it so portraits auto-update.
   if (typeof window.updateCombatUI === 'function') {
     const original = window.updateCombatUI;
     window.updateCombatUI = function () {
@@ -121,7 +111,6 @@
       if (window.gameState && gameState.player) {
         updatePortraitBasedOnHP(gameState.player);
       }
-      // ensure log autoscroll behavior is preserved: if user is at bottom, keep it at bottom
       if (logScrollContainer) {
         const atBottom = logScrollContainer.scrollHeight - logScrollContainer.clientHeight <= logScrollContainer.scrollTop + 1;
         if (atBottom) logScrollContainer.scrollTop = logScrollContainer.scrollHeight;
