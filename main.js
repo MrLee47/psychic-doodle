@@ -1,204 +1,151 @@
-/* -------------------------------------------------------
-   Chronicles of Heroes: Modular Game & Combat Core
-   -------------------------------------------------------
-   Features:
-   - Theme Switching
-   - Character Selection
-   - Coin & Dice Clash Combat
-   - Modular, reusable functions for abilities, clash, and damage
-------------------------------------------------------- */
+// --- NEW/UPDATED DOM REFERENCES ---
+const logScrollContainer = document.getElementById('log-scroll-container');
+const combatLog = document.getElementById('combat-log');
 
-// ----------------- GLOBAL STATE -----------------
-const gameState = {
-    isGameStarted: false,
-    currentView: 'menu',
-    player: null,
-    enemy: null,
-    currentTheme: 'default',
-    turn: 1,
-    playerAction: null,
-    enemyAction: null,
-};
+const abilitiesMini = document.getElementById('abilities-mini');
+const abilityTooltip = document.getElementById('ability-tooltip');
+const charInfoBtn = document.getElementById('char-info-btn');
+const charInfoModal = document.getElementById('char-info-modal');
+const charInfoClose = document.getElementById('char-info-close');
+const charInfoContent = document.getElementById('char-info-content');
+const playerPortrait = document.getElementById('player-portrait');
+const roomDesc = document.getElementById('room-desc');
 
-// ----------------- DOM REFS -----------------
-const $ = (id) => document.getElementById(id);
-const body = document.body;
-const menuScreen = $('menu-screen');
-const gameContainer = $('game-container');
-const charSelectScreen = $('character-select-screen');
+// --- UPDATE updateHealthDisplay to change portrait emoji based on HP% ---
+function updateHealthDisplay(entity, ui) {
+    const maxHP = entity.baseStats.maxHP;
+    const currentHP = entity.baseStats.currentHP;
+    const percentage = Math.max(0, (currentHP / maxHP) * 100);
 
-const newGameBtn = $('new-game-btn');
-const loadGameBtn = $('load-game-btn');
-const openSettingsBtn = $('open-settings-menu-btn');
-const settingsPanel = $('settings-panel');
-const closeSettingsBtn = $('close-settings-btn');
-const themeOptionBtns = document.querySelectorAll('.theme-option-btn');
+    ui.hpBar.style.width = `${percentage}%`;
+    ui.hpText.textContent = `${currentHP}/${maxHP}`;
 
-const dialogueText = $('dialogue-text');
-const actionButtonsDiv = $('action-buttons');
-const combatLog = $('combat-log');
-const passTurnBtn = $('pass-turn-btn');
+    const effects = entity.baseStats.effects;
+    let statusDisplay = entity.baseStats.status;
+    if (effects.length > 0) statusDisplay += ` (${effects.join(', ')})`;
 
-const playerStatus = {
-    name: $('player-name'),
-    hpBar: $('player-hp-bar'),
-    hpText: $('player-hp-text'),
-    statusText: $('player-status-text'),
-};
+    ui.statusText.textContent = statusDisplay;
+    if (currentHP <= 0) {
+        ui.hpBar.style.width = '0%';
+        ui.statusText.textContent = 'Defeated';
+    }
 
-const enemyStatus = {
-    name: $('enemy-name'),
-    hpBar: $('enemy-hp-bar'),
-    hpText: $('enemy-hp-text'),
-    statusText: $('enemy-status-text'),
-};
+    // If updating player portrait:
+    if (ui === playerStatus) {
+        // Simple emoji states; replace with images if you add assets
+        let emoji = '🛡️';
+        if (percentage <= 33) emoji = '💀';
+        else if (percentage <= 66) emoji = '😟';
+        else emoji = '🙂';
+        playerPortrait.innerText = emoji;
+    }
+}
 
-// ----------------- UTILITY -----------------
-const rollDie = (max) => Math.floor(Math.random() * max) + 1;
-const rollCoins = (count) => [...Array(count)].reduce((sum) => sum + (Math.random() < 0.5 ? 0 : 1), 0);
-
-const log = (msg, className = '') => {
-    const p = document.createElement('p');
-    p.className = `log-entry ${className}`;
-    p.textContent = `[T${gameState.turn}] ${msg}`;
-    combatLog.prepend(p);
-    while (combatLog.children.length > 50) combatLog.removeChild(combatLog.lastChild);
-};
-
-const applyTheme = (theme) => {
-    body.className = '';
-    body.classList.add(`${theme}-theme`);
-    localStorage.setItem('gameTheme', theme);
-    gameState.currentTheme = theme;
-};
-
-// ----------------- VIEW -----------------
-const setView = (view) => {
-    ['menu', 'select', 'combat'].forEach(v => $(v + '-screen').classList.add('hidden'));
-    gameState.currentView = view;
-    if (view === 'menu') menuScreen.classList.remove('hidden');
-    else if (view === 'select') { charSelectScreen.classList.remove('hidden'); renderCharacterSelection(); }
-    else if (view === 'combat') { gameContainer.classList.remove('hidden'); updateCombatUI(); renderCombatActions(); }
-};
-
-// ----------------- CHARACTER SELECTION -----------------
-const renderCharacterSelection = () => {
-    const charList = $('character-list');
-    charList.innerHTML = '';
-    let selectedCharId = null;
-
-    CHARACTERS.forEach(char => {
-        const card = document.createElement('div');
-        card.className = 'char-card';
-        card.dataset.id = char.id;
-        card.innerHTML = `
-            <h4>${char.name}</h4>
-            <p>${char.description}</p>
-            <p><strong>HP:</strong>${char.baseStats.maxHP} <strong>DEF:</strong>${char.baseStats.defense} <strong>SPD:</strong>${char.baseStats.speed}</p>
-            <p><strong>Passive:</strong>${char.uniquePassive.name}</p>
-        `;
-        card.addEventListener('click', () => {
-            document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
-            card.classList.add('selected');
-            selectedCharId = char.id;
-            $('start-combat-btn').classList.remove('hidden');
+// --- Abilities rendering + hover tooltip integration ---
+function renderInventoryAndAbilities() {
+    // Inventory unchanged
+    inventoryList.innerHTML = '';
+    if (!gameState.dungeonState || gameState.dungeonState.inventory.length === 0) {
+        inventoryList.innerHTML = '<li class="text-gray-600">No items found yet.</li>';
+    } else {
+        gameState.dungeonState.inventory.forEach(item => {
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>${item.name}</strong> (x${item.qty}): ${item.description}`;
+            inventoryList.appendChild(li);
         });
-        charList.appendChild(card);
+    }
+
+    // Abilities: render tiny chips that show tooltip on hover
+    abilitiesMini.innerHTML = '';
+    const allAbilities = gameState.player.abilities.filter(a => !a.isHidden);
+    allAbilities.forEach(a => {
+        const chip = document.createElement('div');
+        chip.className = 'ability-chip';
+        chip.tabIndex = 0;
+        chip.textContent = a.name;
+        chip.dataset.desc = a.description || (a.effect ? a.effect : (a.damageType ? `${a.damageType} attack` : ''));
+        chip.addEventListener('mouseenter', (e) => {
+            abilityTooltip.innerText = chip.dataset.desc;
+            abilityTooltip.style.display = 'block';
+            abilityTooltip.setAttribute('aria-hidden', 'false');
+            // position tooltip near chip
+            const r = chip.getBoundingClientRect();
+            abilityTooltip.style.left = `${r.right + 8}px`;
+            abilityTooltip.style.top = `${r.top}px`;
+        });
+        chip.addEventListener('mouseleave', () => {
+            abilityTooltip.style.display = 'none';
+            abilityTooltip.setAttribute('aria-hidden', 'true');
+        });
+        chip.addEventListener('focus', (e) => { chip.dispatchEvent(new Event('mouseenter')); });
+        chip.addEventListener('blur', (e) => { chip.dispatchEvent(new Event('mouseleave')); });
+
+        // Also clicking the chip can select/use the ability if desired (optional)
+        abilitiesMini.appendChild(chip);
     });
 
-    $('start-combat-btn').onclick = () => { if (selectedCharId) startNewGame(selectedCharId); };
-};
+    // Fill character info modal content for the Info button
+    if (gameState.player) {
+        charInfoContent.innerHTML = '';
+        const header = document.createElement('p');
+        header.className = 'font-bold';
+        header.textContent = `${gameState.player.name}'s Abilities:`;
+        charInfoContent.appendChild(header);
 
-// ----------------- GAME START -----------------
-const startNewGame = (charId) => {
-    const selectedChar = CHARACTERS.find(c => c.id === charId);
-    const commonBaseStats = { maxHP: 100, currentHP: 100, defense: 0, level: 1, status: 'Alive', speed: 0, consecutive_rounds: 0, effects: [], isGrappling: false, grapple_die: 8, lastDamageTaken: 0, tri_sword_state: 'Scythe', gender: 'Male' };
-
-    gameState.player = { ...JSON.parse(JSON.stringify(selectedChar)), baseStats: { ...commonBaseStats, ...selectedChar.baseStats, currentHP: selectedChar.baseStats.maxHP } };
-    gameState.enemy = { ...JSON.parse(JSON.stringify(ENEMY_GOBLIN)), baseStats: { ...commonBaseStats, ...ENEMY_GOBLIN.baseStats, currentHP: ENEMY_GOBLIN.baseStats.maxHP } };
-
-    gameState.turn = 1;
-    gameState.playerAction = null;
-    gameState.enemyAction = null;
-
-    combatLog.innerHTML = '';
-    dialogueText.textContent = `A powerful champion, ${gameState.player.name}, steps forward!`;
-    setView('combat');
-    log(`${gameState.enemy.name} challenges ${gameState.player.name}!`, 'log-special');
-};
-
-// ----------------- COMBAT -----------------
-const updateHealthDisplay = (entity, ui) => {
-    const { maxHP, currentHP, status, effects } = entity.baseStats;
-    const pct = Math.max(0, (currentHP / maxHP) * 100);
-    ui.hpBar.style.width = `${pct}%`;
-    ui.hpText.textContent = `${currentHP}/${maxHP}`;
-    ui.statusText.textContent = status + (effects.length ? ` (${effects.join(', ')})` : '');
-    if (currentHP <= 0) ui.statusText.textContent = 'Defeated';
-};
-
-const updateCombatUI = () => {
-    updateHealthDisplay(gameState.player, playerStatus);
-    updateHealthDisplay(gameState.enemy, enemyStatus);
-    playerStatus.name.textContent = gameState.player.name;
-    enemyStatus.name.textContent = gameState.enemy.name;
-    passTurnBtn.classList.add('hidden');
-    actionButtonsDiv.querySelectorAll('button').forEach(b => b.disabled = !!gameState.playerAction);
-};
-
-// Resolves a single ability
-const executeSingleAction = (attacker, ability, target) => {
-    if (!ability || target.baseStats.currentHP <= 0) return;
-
-    if (ability.type === 'DEFENSE') {
-        if (ability.defenseEffect === 'NegateNextHit') target.baseStats.effects.push('NegateNextHit');
-        log(`${attacker.name} executes a defensive maneuver!`, 'log-win');
-
-    } else if (ability.type === 'SPECIAL' && ability.name === 'Grapple') {
-        const roll = rollDie(ability.dice), targetRoll = rollDie(target.baseStats.grapple_die);
-        if (roll > targetRoll) { target.baseStats.effects.push('Grappled'); log(`${attacker.name} grapples ${target.name}!`, 'log-win'); }
-        else log(`${attacker.name} fails to grapple ${target.name}.`, 'log-loss');
-
-    } else if (ability.type === 'SWITCH') {
-        const weapons = ['Scythe','Trident','Hammer'];
-        let idx = weapons.indexOf(attacker.baseStats.tri_sword_state);
-        attacker.baseStats.tri_sword_state = weapons[(idx+1)%3];
-        const dmg = ability.baseAttack || 2;
-        target.baseStats.currentHP = Math.max(0,target.baseStats.currentHP - dmg);
-        log(`${attacker.name} cycles weapon to ${attacker.baseStats.tri_sword_state} and deals ${dmg} dmg!`, 'log-win');
-
-    } else if (ability.type === 'ATTACK') {
-        let coins = rollCoins(ability.coins);
-        let dice = rollDie(ability.dice);
-        applyDamage(ability, attacker, target, coins, dice);
-        if (ability.statusEffect === 'Stagger') { target.baseStats.effects.push('Stagger'); log(`${target.name} is Staggered!`, 'log-loss'); }
+        gameState.player.abilities.forEach(a => {
+            const abDiv = document.createElement('div');
+            abDiv.className = 'p-1 border-b';
+            abDiv.innerHTML = `<strong>${a.name}</strong> <div class="text-sm mt-1">${a.description || a.effect || 'No description'}</div>`;
+            charInfoContent.appendChild(abDiv);
+        });
     }
-};
+}
 
-// Apply damage (called by Clash or single action)
-const applyDamage = (ability, attacker, target, coinBonus = rollCoins(ability.coins), diceRoll = rollDie(ability.dice)) => {
-    if (!target.baseStats.effects) target.baseStats.effects = [];
-    let dmg = Math.max(0, (ability.baseAttack||0) + coinBonus - target.baseStats.defense);
-    if (target.baseStats.effects.includes('NegateNextHit')) { log(`${target.name} Phases!`, 'log-win'); dmg=0; target.baseStats.effects = target.baseStats.effects.filter(e=>e!=='NegateNextHit'); }
-    target.baseStats.currentHP = Math.max(0, target.baseStats.currentHP - dmg);
-    log(`${attacker.name} hits for ${dmg} (${ability.damageType})`, 'log-damage');
+// --- Character Info modal handlers ---
+charInfoBtn && charInfoBtn.addEventListener('click', () => {
+    if (!gameState.player) return;
+    charInfoModal.style.display = 'flex';
+    charInfoModal.setAttribute('aria-hidden', 'false');
+});
 
-    if (target.id==='shutenmaru') target.baseStats.lastDamageTaken=dmg;
-    if (attacker.id==='shutenmaru' && attacker.uniquePassive.type==='RollTrigger' && diceRoll===attacker.uniquePassive.triggerValue){
-        let heal=target.baseStats.lastDamageTaken;
-        attacker.baseStats.currentHP=Math.min(attacker.baseStats.maxHP, attacker.baseStats.currentHP+heal);
-        log(`Chrono-Fist heals ${heal} HP!`, 'log-win');
+charInfoClose && charInfoClose.addEventListener('click', () => {
+    charInfoModal.style.display = 'none';
+    charInfoModal.setAttribute('aria-hidden', 'true');
+});
+
+// Close modal with Escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && charInfoModal && charInfoModal.style.display === 'flex') {
+        charInfoModal.style.display = 'none';
+        charInfoModal.setAttribute('aria-hidden', 'true');
+    }
+});
+
+// Update room description when moving or entering rooms
+function updateCombatUI() {
+    // ... keep existing updates at top (hp bars etc.)
+    if (gameState.enemy) {
+        updateHealthDisplay(gameState.enemy, enemyStatus);
+        enemyStatus.name.textContent = gameState.enemy.name;
+        enemySpriteName.textContent = gameState.enemy.name;
+        enemyStatusCard.classList.remove('hidden');
+        visualContext.textContent = `VS ${gameState.enemy.name} | Turn ${gameState.turn}`;
+        enemySprite.classList.remove('hidden');
+    } else {
+        enemyStatusCard.classList.add('hidden');
+        visualContext.textContent = `In the dungeon: Room ${gameState.dungeonState.roomsCleared + 1}`;
+        enemySprite.classList.add('hidden');
     }
 
-    if (ability.name==='Piledriver') { target.baseStats.effects = target.baseStats.effects.filter(e=>'Grappled'); attacker.baseStats.isGrappling=false; log(`${target.name} released from Grapple`,'log-special'); }
-};
+    const area = AREA_DATA[gameState.dungeonState.currentAreaId];
+    areaDisplay.textContent = `Area: ${area.name}`;
+    roomProgressDisplay.textContent = `Room ${gameState.dungeonState.roomsCleared + 1}/${area.totalRooms}`;
+    // Show the short description combined in the room header
+    roomDesc.textContent = area.roomDescriptions[gameState.dungeonState.currentRoomType] || '';
 
-// ----------------- INITIALIZATION -----------------
-const init = () => {
-    applyTheme(localStorage.getItem('gameTheme')||'default');
-    setView('menu');
-    newGameBtn.onclick = () => setView('select');
-    openSettingsBtn.onclick = closeSettingsBtn.onclick = () => settingsPanel.classList.toggle('open');
-    themeOptionBtns.forEach(btn => btn.onclick = () => applyTheme(btn.dataset.theme));
-};
-window.onload = init;
+    renderInventoryAndAbilities();
+
+    // Disable action buttons if an action has been chosen
+    const buttons = actionButtonsDiv.querySelectorAll('button');
+    buttons.forEach(btn => btn.disabled = gameState.playerAction !== null && gameState.currentView === 'combat');
+}
