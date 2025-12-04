@@ -1,137 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>The Game: Erebos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
     <style>
-        /* UPDATED: Switched to a Cream/Black color scheme for light mode */
-        :root {
-            --primary-bg: #fcfcfc; /* Near White/Cream */
-            --section-bg: #ffffff; /* White/Light Cream */
-            --text-color: #1f2937; /* Dark Gray/Black Text */
-            --accent-color: #f59e0b; /* Amber/Action */
-            --hp-color: #dc2626; /* Darker Red */
-            --mp-color: #3b82f6; /* Blue */
-            --log-special: #047857; /* Darker Green highlight */
-            --log-win: #059669; /* Darker Green */
-            --log-loss: #b91c1c; /* Dark Red */
-            --log-damage: #b45309; /* Dark Orange for damage */
-        }
-        
-        body {
-            background-color: var(--primary-bg);
-            color: var(--text-color);
-            font-family: 'Inter', sans-serif;
-        }
-
-        .section-box {
-            background-color: var(--section-bg);
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Lighter shadow for light mode */
-            border: 1px solid #d1d5db; /* Light border */
-        }
-
-        /* NEW: Added position relative for the clash visualizer to work */
-        #visuals-panel {
-            position: relative;
-        }
-
-        .hp-bar-inner {
-            transition: width 0.5s ease-out;
-            background-color: var(--hp-color);
-            border-radius: 9999px;
-            height: 100%;
-        }
-        
-        .log-entry {
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            padding: 4px 0;
-            margin: 0;
-            font-size: 0.85rem;
-        }
-        .log-special { color: var(--log-special); }
-        .log-win { color: var(--log-win); font-weight: bold; }
-        .log-loss { color: var(--log-loss); font-weight: bold; }
-        .log-damage { color: var(--log-damage); }
-        
-        .combat-btn, .action-btn {
-            background-color: var(--accent-color);
-            color: var(--text-color); /* Ensure dark text on accent background */
-            font-weight: bold;
-            padding: 10px 15px;
-            border-radius: 6px;
-            transition: all 0.1s;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            border: 1px solid #d97706; 
-        }
-        .combat-btn:hover:not(:disabled), .action-btn:hover:not(:disabled) {
-            background-color: #fcd34d;
-            transform: translateY(-1px);
-        }
-        .combat-btn:disabled, .action-btn:disabled {
-            background-color: #d1d5db; /* Light gray for disabled */
-            color: #6b7280; /* Dark gray for disabled text */
-            cursor: not-allowed;
-            box-shadow: none;
-            border: none;
-        }
-        
-        /* Character Select Screen Styles (Retained) */
-        .char-card {
-            border: 2px solid #d1d5db;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .char-card:hover {
-            border-color: var(--accent-color);
-        }
-        .char-card.selected {
-            border-color: var(--hp-color);
-            box-shadow: 0 0 8px rgba(220, 38, 38, 0.5); /* Red shadow */
-        }
-        .combo-ready {
-            background-color: var(--hp-color);
-            color: white;
-        }
-        .active-weapon-btn {
-            border: 3px solid var(--hp-color) !important;
-            box-shadow: 0 0 8px rgba(220, 38, 38, 0.5) !important;
-        }
-
-        /* UPDATED: Clash Visualizer Styles */
-        #clash-visualizer {
-            z-index: 10;
-        }
-        .dice-slot-digit {
-            font-family: 'Inter', monospace, sans-serif;
-            font-weight: 900;
-        }
-        .text-hp-color { color: var(--hp-color); }
-        .text-mp-color { color: var(--mp-color); }
-        .clash-card {
-            background-color: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-            padding: 12px;
-            min-width: 150px;
-        }
-
-        .clash-dice-box, .clash-coin-box {
-            height: 80px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            border-radius: 4px;
-        }
+      /* Keep small inline helpers here if needed */
     </style>
 </head>
-<body class="min-h-screen p-4 flex flex-col items-center">
+<body class="default-theme min-h-screen p-4 flex flex-col items-center">
 
     <!-- SETTINGS PANEL (Hidden by default) -->
-    <div id="settings-panel" class="fixed inset-0 z-50 bg-gray-200 bg-opacity-75 backdrop-blur-sm hidden justify-center items-center">
+    <div id="settings-panel" class="fixed inset-0 z-50 bg-gray-200 bg-opacity-75 backdrop-blur-sm hidden justify-center items-center" aria-hidden="true">
         <div class="section-box w-11/12 md:w-1/3 p-6 space-y-4">
             <h2 class="text-2xl font-bold">Settings</h2>
             <div class="space-y-2">
@@ -154,7 +37,7 @@
         <button id="open-settings-menu-btn" class="action-btn w-64">Settings</button>
     </div>
 
-    <!-- CHARACTER SELECT SCREEN (UI Retained) -->
+    <!-- CHARACTER SELECT SCREEN -->
     <div id="character-select-screen" class="hidden w-full max-w-4xl">
         <h2 class="text-3xl font-bold mb-6 text-center text-accent-color">Select Your Hero</h2>
         <div id="character-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -165,1323 +48,137 @@
         </div>
     </div>
 
-    <!-- MAIN GAME CONTAINER WRAPPER - UPDATED GRID LAYOUT (cols-5) -->
-    <div id="main-game-wrapper" class="hidden w-full max-w-7xl px-4 mt-8 grid grid-cols-1 lg:grid-cols-5 gap-6">
+    <!-- MAIN GAME WRAPPER: 5 columns layout to keep everything visible without vertical scrolling -->
+    <div id="main-game-wrapper" class="hidden w-full max-w-7xl px-2 mt-6 grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
 
-        <!-- VISUALS PANEL (Left Column - 40% width on desktop) -->
-        <div id="visuals-panel" class="section-box lg:col-span-2 p-4 flex flex-col items-center justify-center min-h-[300px] lg:min-h-[600px] space-y-4">
-            <h2 class="text-3xl font-bold text-accent-color">Combat View</h2>
-            <div id="animation-slot" class="text-4xl text-gray-400">
-                <!-- Placeholder for Player/Enemy sprites or animations -->
-                <div class="flex space-x-12">
+        <!-- VISUALS PANEL (Left) -->
+        <div id="visuals-panel" class="section-box lg:col-span-2 p-3 flex flex-col items-stretch justify-start space-y-3">
+            <!-- Enemy status intentionally placed above visuals -->
+            <div id="enemy-status-card" class="p-2 section-box hidden">
+                <div class="flex justify-between items-center">
+                    <h3 id="enemy-name" class="font-bold text-red-600">Enemy</h3>
+                    <span id="enemy-status-text" class="text-sm">Alive</span>
+                </div>
+                <div class="h-3 bg-gray-300 rounded-full mt-2">
+                    <div id="enemy-hp-bar" class="hp-bar-inner" style="width: 100%; height: 100%;"></div>
+                </div>
+                <div class="flex justify-between text-xs mt-1">
+                    <span id="enemy-hp-text">100/100</span>
+                    <span id="enemy-level-text">Lv. 1</span>
+                </div>
+            </div>
+
+            <div id="animation-slot" class="text-4xl text-gray-400 flex items-center justify-center min-h-[160px]">
+                <div class="flex space-x-8 items-center">
                     <div id="player-sprite" class="text-center">
-                        <span class="text-7xl">🛡️</span>
-                        <p id="player-sprite-name" class="text-xl font-bold mt-2">Hero</p>
+                        <div id="player-portrait" class="section-box p-2 text-6xl">
+                            <!-- JS will update emoji portrait here -->
+                            🛡️
+                        </div>
+                        <p id="player-sprite-name" class="text-lg font-bold mt-2">Hero</p>
                     </div>
                     <div id="enemy-sprite" class="text-center hidden">
-                        <span class="text-7xl">👹</span>
-                        <p id="enemy-sprite-name" class="text-xl font-bold mt-2">Enemy</p>
+                        <span class="text-6xl">👾</span>
+                        <p id="enemy-sprite-name" class="text-lg font-bold mt-2">Enemy</p>
                     </div>
                 </div>
             </div>
-            <p id="visual-context" class="text-sm italic text-gray-400 mt-4">Current Room: Ready to fight.</p>
 
-            <!-- NEW: CLASH VISUALIZER (Starts hidden) -->
-            <div id="clash-visualizer" class="absolute inset-0 bg-gray-900 bg-opacity-75 backdrop-blur-sm hidden flex-col justify-center items-center text-white p-4 rounded-lg">
-                <!-- Content injected by JS during clash -->
-            </div>
+            <p id="visual-context" class="text-sm italic text-gray-400 mt-1">Current Room: Ready to fight.</p>
         </div>
 
-        <!-- GAME UI COLUMN (Right Column - 60% width on desktop) -->
-        <div id="game-container" class="w-full space-y-6 lg:col-span-3">
+        <!-- GAME UI COLUMN (Center) -->
+        <div id="game-container" class="w-full lg:col-span-2 space-y-3">
 
-            <!-- STATUS BARS & HEADER -->
-            <div id="status-bars" class="space-y-4">
-                <!-- Player Status -->
-                <div id="player-status-card" class="section-box p-4 space-y-2">
-                    <h3 id="player-name" class="text-xl font-bold text-accent-color">Player Name</h3>
-                    <div class="h-5 bg-gray-300 rounded-full">
-                        <div id="player-hp-bar" class="hp-bar-inner" style="width: 100%;"></div>
+            <!-- Compact header: area + room + dialogue combined -->
+            <div id="room-header-card" class="section-box p-3 flex items-center justify-between">
+                <div class="flex flex-col">
+                    <div class="flex items-baseline gap-3">
+                        <span id="area-display" class="font-bold text-accent-color">Area: Erebos</span>
+                        <span id="room-progress-display" class="text-sm text-gray-600">Room 1/6</span>
                     </div>
-                    <div class="flex justify-between text-sm">
-                        <span id="player-hp-text">100/100</span>
-                        <span id="player-status-text">Alive</span>
-                    </div>
+                    <p id="room-desc" class="text-sm text-gray-700 mt-1">The air is thick with tension.</p>
                 </div>
-                <!-- Enemy Status (Hidden when not in combat) -->
-                <div id="enemy-status-card" class="section-box p-4 space-y-2 hidden">
-                    <h3 id="enemy-name" class="text-xl font-bold text-red-600 text-right">Enemy Name</h3>
-                    <div class="h-5 bg-gray-300 rounded-full">
-                        <div id="enemy-hp-bar" class="hp-bar-inner" style="width: 100%;"></div>
+
+                <div class="flex flex-col items-end">
+                    <div id="player-status-card" class="w-full md:w-48 section-box p-2">
+                        <div class="flex justify-between items-center">
+                            <h3 id="player-name" class="text-sm font-bold text-accent-color">Player Name</h3>
+                            <div class="flex items-center gap-2">
+                                <button id="char-info-btn" class="action-btn px-2 py-1 text-xs">Info</button>
+                            </div>
+                        </div>
+
+                        <div class="h-3 bg-gray-300 rounded-full mt-2">
+                            <div id="player-hp-bar" class="hp-bar-inner" style="width: 100%; height: 100%;"></div>
+                        </div>
+                        <div class="flex justify-between text-xs mt-1">
+                            <span id="player-hp-text">100/100</span>
+                            <span id="player-status-text">Alive</span>
+                        </div>
                     </div>
-                    <div class="flex justify-between text-sm">
-                        <span id="enemy-status-text">Alive</span>
-                        <span id="enemy-hp-text">100/100</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- UPDATED: ROOM INFO CARD (SEPARATED FROM DIALOGUE) -->
-            <div id="room-info-card" class="section-box p-4 flex justify-between font-semibold border-b border-gray-300 pb-2">
-                <span id="area-display" class="text-accent-color">Area: Erebos</span>
-                <span id="room-progress-display" class="text-gray-600">Room 1/6</span>
-            </div>
-
-            <!-- DIALOGUE BOX -->
-            <div class="section-box p-4">
-                <p id="dialogue-text" class="text-lg italic">Welcome to the adventure!</p>
-            </div>
-
-            <!-- COMBAT LOG (Smart Scrolling Implemented) -->
-            <!-- ADDED ID FOR SCROLL MANAGEMENT: log-scroll-container -->
-            <div id="log-scroll-container" class="section-box p-4 h-[400px] overflow-y-auto">
-                <h3 class="text-xl font-bold border-b border-gray-300 pb-2 mb-2 text-text-color">Event Log</h3>
-                <div id="combat-log" class="space-y-1">
-                    <!-- Combat/Dungeon Log Entries Here -->
                 </div>
             </div>
 
-            <!-- ACTIONS / DUNGEON INTERACTION -->
-            <div class="section-box p-4 space-y-4">
-                <h3 id="action-header" class="text-2xl font-bold text-accent-color border-b border-gray-300 pb-2">Actions</h3>
-                <div id="action-buttons" class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <!-- Action/Combat Buttons Render Here -->
+            <!-- Actions & Inventory (brought higher) -->
+            <div id="action-inventory" class="flex flex-col md:flex-row gap-3">
+                <div id="actions-box" class="section-box p-3 flex-1">
+                    <h4 class="font-bold mb-2 text-accent-color">Actions</h4>
+                    <div id="action-buttons" class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        <!-- Action/Combat Buttons Render Here -->
+                    </div>
+                    <button id="pass-turn-btn" class="action-btn w-full hidden mt-2">Pass Turn</button>
                 </div>
-                <button id="pass-turn-btn" class="action-btn w-full hidden">Pass Turn</button>
-            </div>
-            
-            <!-- INVENTORY AND ABILITIES (KEPT AS SIMPLE STACKED BLOCKS) -->
-            <div id="inventory-display" class="section-box p-4 flex flex-col md:flex-row gap-6 mt-6">
-                <div class="w-full md:w-1/2">
-                    <h4 class="text-xl font-semibold border-b border-gray-300 pb-2 mb-2 text-accent-color">Inventory</h4>
-                    <ul id="inventory-list" class="text-sm space-y-1">
+
+                <div id="inventory-box" class="section-box p-3 w-72">
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-bold text-accent-color">Inventory</h4>
+                        <button id="inventory-toggle" class="action-btn px-2 py-1 text-xs">Open</button>
+                    </div>
+                    <ul id="inventory-list" class="text-sm space-y-1 max-h-36 overflow-y-auto">
                         <li class="text-gray-600">No items found yet.</li>
                     </ul>
-                </div>
-                <div class="w-full md:w-1/2">
-                    <h4 class="text-xl font-semibold border-b border-gray-300 pb-2 mb-2 text-accent-color">Abilities</h4>
-                    <ul id="ability-list" class="text-sm space-y-1">
-                        <!-- Base abilities load here, new ones get added -->
-                    </ul>
+
+                    <!-- Compact abilities row: hover to see description -->
+                    <div class="mt-3">
+                        <h5 class="text-sm font-semibold mb-1">Abilities (hover for info)</h5>
+                        <div id="abilities-mini" class="flex flex-wrap gap-1">
+                            <!-- Small ability chips render here -->
+                        </div>
+                    </div>
                 </div>
             </div>
 
-        </div> <!-- End game-container -->
-    </div> <!-- End main-game-wrapper -->
+            <!-- Combat Log removed from bottom; moved to right-hand column externally to keep page height down -->
 
-    <!-- JAVASCRIPT LOGIC -->
-    <script type="text/javascript">
-/**
- * The Game: Core Game and Combat Logic
- * Includes: Theme Switching, Character Selection, Combat, and Dungeon Management.
- */
+        </div>
 
-// --- GLOBAL GAME STATE (Local Storage is used for persistence) ---
-let gameState = {
-    isGameStarted: false,
-    currentView: 'menu', // menu, select, dungeon, combat
-    player: null,
-    enemy: null, // Only populated during 'combat' view
-    turn: 1,
-    playerAction: null, 
-    enemyAction: null,
-    dungeonState: {
-        currentAreaId: null,
-        currentRoomIndex: 0,
-        roomsCleared: 0,
-        roomsUntilBoss: 5,
-        currentRoomType: null,
-        inventory: [], 
-        unlockedAbilities: [],
-    }
-};
-
-const BASE_CLASH_VALUE = 5;
-
-// --- DATA DEFINITIONS ---
-
-// ENEMY TEMPLATES
-const ENEMY_TEMPLATES = {
-    'goblin': {
-        id: 'goblin',
-        name: 'Gravel-Claw Goblin',
-        baseStats: { maxHP: 80, defense: 2, level: 1, currentHP: 80, status: 'Alive', effects: [], grapple_die: 6, gender: 'Male', speed: 2 },
-        abilities: [
-            { name: 'Gnaw Attack', type: 'ATTACK', damageType: 'Physical', baseAttack: 5, dice: 6, coins: 2, },
-            { name: 'Defensive Crouch', type: 'DEFENSE', defenseEffect: 'DefensePlusTwo', baseAttack: 0, dice: 0, coins: 0, },
-        ]
-    },
-    'skeleton': {
-        id: 'skeleton',
-        name: 'Decaying Skeleton',
-        baseStats: { maxHP: 60, defense: 1, level: 1, currentHP: 60, status: 'Alive', effects: [], grapple_die: 4, gender: 'Male', speed: 3 },
-        abilities: [
-            { name: 'Bone Bash', type: 'ATTACK', damageType: 'Blunt', baseAttack: 4, dice: 4, coins: 1, },
-        ]
-    }
-};
-
-// ITEM TEMPLATES (No longer used, but kept for future reference)
-const ITEM_TEMPLATES = {
-    'healing_potion': { 
-        id: 'healing_potion', 
-        name: 'Healing Potion', 
-        type: 'Consumable', 
-        description: 'Restores 25 HP.', 
-        effect: { type: 'Heal', value: 25 } 
-    }
-};
-
-// AREA DATA (Dungeon Definitions) - FIXED: Only Combat rooms for easy testing
-const AREA_DATA = {
-    'erebos': {
-        name: 'Erebos',
-        totalRooms: 6, // 5 regular rooms + 1 boss room
-        bossRoomIndex: 5,
-        roomTypes: ['Combat'], // <--- ONLY COMBAT ROOMS FOR TESTING
-        enemyPool: ['goblin', 'skeleton'],
-        bossId: 'goblin_king', // Placeholder boss ID
-        roomDescriptions: {
-            'Combat': 'The air is thick with tension. A hideous creature blocks your path!',
-            'Empty': 'The room is silent and empty, offering a moment of quiet reflection.',
-            'Boss': 'The chamber opens into a vast cavern. The mighty Boss awaits!'
-        }
-    }
-};
-
-// Player Characters (Re-used from previous iterations)
-const CHARACTERS = [
-    // --- 1. Striker (Speed 4: Fastest) ---
-    {
-        id: 'striker',
-        name: 'Striker',
-        description: 'Scales in power the longer the fight goes on.',
-        baseStats: { maxHP: 110, defense: 1, level: 1, currentHP: 110, status: 'Alive', consecutive_rounds: 0, effects: [], speed: 4, gender: 'Male' }, 
-        uniquePassive: { name: 'Slow Start', type: 'CoinScaler' },
-        abilities: [
-            { name: 'Dragon Strike', type: 'ATTACK', damageType: 'Force', baseAttack: 4, dice: 4, coins: 2, },
-            // UPDATED: Added selfStagger: true to ensure Striker staggers himself.
-            { name: 'Heavy Blow', type: 'ATTACK', damageType: 'Force', baseAttack: 10, dice: 12, coins: 0, selfStagger: true, cost: 10 }, 
-        ]
-    },
-    // --- 2. Shuten-Maru (Speed 3) ---
-    {
-        id: 'shutenmaru',
-        name: 'Shuten-Maru',
-        description: 'A psycho demon who uses ethereal powers.',
-        baseStats: { maxHP: 105, defense: 2, level: 1, currentHP: 100, status: 'Alive', lastDamageTaken: 0, effects: [], speed: 3, gender: 'Female' }, 
-        uniquePassive: { name: 'Chrono-Fist', type: 'RollTrigger', abilityName: 'Ghost Fist', triggerValue: 8 },
-        abilities: [
-            { name: 'Ghost Fist', type: 'ATTACK', damageType: 'Psychic', baseAttack: 6, dice: 8, coins: 1, },
-            { name: 'Phase', type: 'DEFENSE', effect: 'Negates the damage of the next incoming attack this turn (one use per combat).', defenseEffect: 'NegateNextHit', baseAttack: 0, dice: 0, coins: 0, cost: 5 }
-        ]
-    },
-    // --- 3. Balter (Speed 1: Slowest) ---
-    {
-        id: 'balter',
-        name: 'Balter',
-        description: 'A muscular powerhouse who controls the battlefield.',
-        baseStats: { maxHP: 130, defense: 3, level: 1, currentHP: 130, status: 'Alive', isGrappling: false, grapple_die: 8, effects: [], speed: 1, gender: 'Male' },
-        // FIX: Increased passive dice from 4 to 10 for more noticeable bonus damage.
-        uniquePassive: { name: 'The Old One-Two', type: 'ClashWinBonus', dice: 10 }, 
-        abilities: [
-            { name: 'Haymaker', type: 'ATTACK', damageType: 'Physical', baseAttack: 7, dice: 10, coins: 1, },
-            { name: 'Grapple', type: 'SPECIAL', effect: 'Rolls d10 vs. target\'s Grapple Die. Success applies Grappled status. Target auto-loses next clash.', statusApplied: 'Grappled', baseAttack: 0, dice: 10, coins: 0, targetGrappleDie: 8 },
-            { name: 'Piledriver', type: 'ATTACK', damageType: 'Physical', baseAttack: 12, dice: 12, coins: 0, requiredTargetStatus: 'Grappled', removesTargetStatus: 'Grappled' }
-        ]
-    },
-    // --- 4. Zectus Maximus (Speed 2) ---
-    {
-        id: 'zectus',
-        name: 'Zectus Maximus',
-        description: 'A versatile warrior whose damage type changes frequently.',
-        baseStats: { maxHP: 100, defense: 2, level: 1, currentHP: 105, status: 'Alive', tri_sword_state: 'Scythe', effects: [], speed: 2, gender: 'Male' }, 
-        uniquePassive: { name: 'Homogenous', type: 'ConditionalCoin', condition: { target_gender: 'Female' }, coinBonus: 2 },
-        abilities: [
-            { name: 'Tri-Sword Attack', type: 'ATTACK', damageType: 'Dynamic', baseAttack: 0, dice: 0, coins: 1, isZectusMainAttack: true }, 
-            { name: 'Tri-Sword: Scythe', type: 'ATTACK', damageType: 'Blunt', baseAttack: 6, dice: 8, coins: 1, isHidden: true },
-            { name: 'Tri-Sword: Trident', type: 'ATTACK', damageType: 'Pierce', baseAttack: 4, dice: 10, coins: 1, isHidden: true },
-            { name: 'Tri-Sword: Hammer', type: 'ATTACK', damageType: 'Blunt', baseAttack: 8, dice: 6, coins: 1, isHidden: true },
-            { name: 'Cycle', type: 'SWITCH', effect: 'Cycles Tri-Sword: Scythe -> Trident -> Hammer. Deals 2 damage to target on activation.', baseAttack: 2, dice: 0, coins: 0, nextState: 'Trident' },
-        ]
-    },
-];
-
-// --- DOM REFERENCES ---
-const menuScreen = document.getElementById('menu-screen');
-const mainGameWrapper = document.getElementById('main-game-wrapper'); // NEW
-const gameContainer = document.getElementById('game-container');
-const charSelectScreen = document.getElementById('character-select-screen');
-
-// Menu Buttons
-const newGameBtn = document.getElementById('new-game-btn');
-const openSettingsBtn = document.getElementById('open-settings-menu-btn');
-
-// Settings Panel
-const settingsPanel = document.getElementById('settings-panel');
-const closeSettingsBtn = document.getElementById('close-settings-btn');
-const themeOptionBtns = document.querySelectorAll('.theme-option-btn');
-
-// Game UI
-const dialogueText = document.getElementById('dialogue-text');
-const actionButtonsDiv = document.getElementById('action-buttons');
-const combatLog = document.getElementById('combat-log');
-// NEW: Reference to the scrollable container
-const logScrollContainer = document.getElementById('log-scroll-container'); 
-
-const passTurnBtn = document.getElementById('pass-turn-btn'); 
-const actionHeader = document.getElementById('action-header');
-const visualContext = document.getElementById('visual-context'); 
-const playerSprite = document.getElementById('player-sprite'); 
-const enemySprite = document.getElementById('enemy-sprite'); 
-const playerSpriteName = document.getElementById('player-sprite-name');
-const enemySpriteName = document.getElementById('enemy-sprite-name');
-
-// Combat Visualizer
-const clashVisualizer = document.getElementById('clash-visualizer'); // NEW
-const clashDiceSlotId = 'clash-dice-slot';
-const clashCoinSlotId = 'clash-coin-slot';
-
-// Dungeon UI
-const areaDisplay = document.getElementById('area-display');
-const roomProgressDisplay = document.getElementById('room-progress-display');
-const inventoryList = document.getElementById('inventory-list');
-const abilityList = document.getElementById('ability-list');
-
-const enemyStatusCard = document.getElementById('enemy-status-card');
-
-// Status Bar References (Dynamic)
-const playerStatus = {
-    name: document.getElementById('player-name'),
-    hpBar: document.getElementById('player-hp-bar'),
-    hpText: document.getElementById('player-hp-text'),
-    statusText: document.getElementById('player-status-text'),
-};
-
-const enemyStatus = {
-    name: document.getElementById('enemy-name'),
-    hpBar: document.getElementById('enemy-hp-bar'),
-    hpText: document.getElementById('enemy-hp-text'),
-    statusText: document.getElementById('enemy-status-text'),
-};
-
-// --- UTILITY FUNCTIONS ---
-
-const rollDie = (max) => Math.floor(Math.random() * max) + 1;
-
-/**
- * Rolls a specified number of coins (50/50 chance for 1 point per coin).
- */
-const rollCoins = (count) => {
-    let sum = 0;
-    for (let i = 0; i < count; i++) {
-        sum += (Math.random() < 0.5 ? 0 : 1);
-    }
-    return sum;
-};
-
-/**
- * Creates a deep clone of a character or enemy template.
- */
-function createEntityFromTemplate(template) {
-    // Define a base template with all possible unique/dynamic stats
-    const commonBaseStats = {
-        maxHP: 100, currentHP: 100, defense: 0, level: 1, status: 'Alive', speed: 0, 
-        consecutive_rounds: 0, 
-        isGrappling: false, 
-        grapple_die: 8, 
-        lastDamageTaken: 0, 
-        tri_sword_state: 'Scythe', 
-        effects: [], 
-        gender: 'Male', 
-    };
-
-    const entity = JSON.parse(JSON.stringify(template)); 
-    entity.baseStats = { 
-        ...commonBaseStats, 
-        ...entity.baseStats,
-        currentHP: entity.baseStats.maxHP
-    };
-    return entity;
-}
-
-function updateHealthDisplay(entity, ui) {
-    const maxHP = entity.baseStats.maxHP;
-    const currentHP = entity.baseStats.currentHP;
-    const percentage = Math.max(0, (currentHP / maxHP) * 100);
-
-    ui.hpBar.style.width = `${percentage}%`;
-    ui.hpText.textContent = `${currentHP}/${maxHP}`;
-    
-    const effects = entity.baseStats.effects;
-    let statusDisplay = entity.baseStats.status;
-
-    if (effects.length > 0) {
-        statusDisplay += ` (${effects.join(', ')})`;
-    }
-    
-    ui.statusText.textContent = statusDisplay;
-
-    if (currentHP <= 0) {
-        ui.hpBar.style.width = '0%';
-        ui.statusText.textContent = 'Defeated';
-    }
-}
-
-/**
- * UPDATED: Log function now appends to the bottom and scrolls down only if the user is at the bottom.
- */
-function log(message, className = '') {
-    // Check if the user is currently scrolled to the bottom (with a small tolerance)
-    const isScrolledToBottom = logScrollContainer.scrollHeight - logScrollContainer.clientHeight <= logScrollContainer.scrollTop + 1;
-
-    const logDiv = document.createElement('p');
-    logDiv.classList.add('log-entry', className);
-    logDiv.textContent = `[T${gameState.turn}] ${message}`;
-    
-    // Append new log entry to the bottom (newest messages at the bottom)
-    combatLog.appendChild(logDiv);
-    
-    // Remove oldest entries (now from the top)
-    while (combatLog.children.length > 50) {
-        combatLog.removeChild(combatLog.firstChild);
-    }
-
-    // Scroll to the bottom if the user was already at the bottom
-    if (isScrolledToBottom) {
-        logScrollContainer.scrollTop = logScrollContainer.scrollHeight;
-    }
-}
-
-/**
- * NEW: Function to simulate a slot machine spin for dice/coins.
- */
-function runSlotAnimation(elementId, maxVal, isCoin) {
-    const slotElement = document.getElementById(elementId);
-    if (!slotElement) return null;
-
-    let interval;
-    const animationStart = performance.now();
-    // Spin duration increased from 2000ms to 3000ms
-    const duration = 3000; 
-
-    const spin = () => {
-        if (performance.now() - animationStart < duration) {
-            let randomValue;
-            if (isCoin) {
-                // For coins, just cycle between head and tail emojis
-                randomValue = Math.random() > 0.5 ? '🥇' : '🥈';
-            } else {
-                // For dice, cycle through random numbers up to maxVal
-                randomValue = rollDie(maxVal);
-            }
-            slotElement.textContent = randomValue;
-        } else {
-            clearInterval(interval);
-        }
-    };
-
-    // Start a fast interval to change numbers
-    interval = setInterval(spin, 50);
-    return interval; // Return the interval ID so it can be stopped later
-}
-
-/**
- * UPDATED: Displays a visual overlay for the clash, waiting for a fixed duration.
- */
-function startClashVisuals(pDiceMax, pCoins, eDiceMax, eCoins, pFinalRoll, pFinalCoin, eFinalRoll, eFinalCoin) {
-    return new Promise(resolve => {
-        clashVisualizer.classList.remove('hidden');
-        clashVisualizer.classList.add('flex');
-        
-        const coinEmoji = (count, result) => {
-            if (count === 0) return '(No Coins)';
-            // Show result: Gold for win (1 point), Silver for loss (0 points)
-            return Array(count).fill('🪙').map((c, i) => i < result ? '🥇' : '🥈').join('');
-        };
-
-        // Generate the visual content with dedicated slot IDs
-        clashVisualizer.innerHTML = `
-            <div class="text-4xl font-bold mb-8 text-accent-color animate-pulse">CLASH!</div>
-            <div class="flex justify-around w-full max-w-lg">
-                <div class="text-center space-y-4 clash-card">
-                    <p class="text-xl font-semibold">${gameState.player.name}</p>
-                    <div id="p-dice-box" class="clash-dice-box bg-red-800">
-                        <span id="p-${clashDiceSlotId}" class="text-7xl dice-slot-digit text-white">?</span>
-                    </div>
-                    <p class="text-2xl" id="p-${clashCoinSlotId}"></p>
-                </div>
-                <div class="text-center space-y-4 clash-card">
-                    <p class="text-xl font-semibold">${gameState.enemy.name}</p>
-                    <div id="e-dice-box" class="clash-dice-box bg-blue-800">
-                        <span id="e-${clashDiceSlotId}" class="text-7xl dice-slot-digit text-white">?</span>
-                    </div>
-                    <p class="text-2xl" id="e-${clashCoinSlotId}"></p>
-                </div>
+        <!-- EVENT LOG (Right column, taller & narrow) -->
+        <div id="log-scroll-container" class="section-box lg:col-span-1 p-2 h-[70vh] overflow-y-auto" role="region" aria-label="Event log">
+            <h3 class="text-lg font-bold border-b border-gray-300 pb-1 mb-1">Event Log</h3>
+            <div id="combat-log" class="space-y-1 text-sm">
+                <!-- Combat/Dungeon Log Entries Here -->
             </div>
-            <p class="mt-8 text-xl">Rolling...</p>
-        `;
-
-        // 1. Start slot animations
-        const pDiceInterval = runSlotAnimation(`p-${clashDiceSlotId}`, pDiceMax, false);
-        const eDiceInterval = runSlotAnimation(`e-${clashDiceSlotId}`, eDiceMax, false);
-        
-        const pCoinInterval = runSlotAnimation(`p-${clashCoinSlotId}`, pCoins, true);
-        const eCoinInterval = runSlotAnimation(`e-${clashCoinSlotId}`, eCoins, true);
-
-
-        // 2. Wait for 3 seconds (increased), then stop and display final results
-        setTimeout(() => {
-            clearInterval(pDiceInterval);
-            clearInterval(eDiceInterval);
-            clearInterval(pCoinInterval);
-            clearInterval(eCoinInterval);
-
-            // Update with final values
-            document.getElementById(`p-${clashDiceSlotId}`).textContent = pFinalRoll;
-            document.getElementById(`e-${clashDiceSlotId}`).textContent = eFinalRoll;
-            document.getElementById(`p-${clashCoinSlotId}`).innerHTML = coinEmoji(pCoins, pFinalCoin);
-            document.getElementById(`e-${clashCoinSlotId}`).innerHTML = coinEmoji(eCoins, eFinalCoin);
-            
-            // Update context
-            clashVisualizer.querySelector('p.mt-8').textContent = 'Results are in! (Closing in 1s)';
-
-            // 3. Wait 1 second (increased) for final result display before returning
-            setTimeout(() => {
-                clashVisualizer.classList.add('hidden');
-                clashVisualizer.classList.remove('flex');
-                resolve();
-            }, 1000); // Total animation time is 4.0 seconds (3s spin + 1s pause)
-
-        }, 3000); 
-    });
-}
-
-// --- THEME & SETTINGS LOGIC (Simplified) ---
-
-function applyTheme(themeName) {
-    // Currently only supporting default theme
-    localStorage.setItem('gameTheme', 'default');
-}
-
-function toggleSettingsPanel() {
-    settingsPanel.classList.toggle('hidden');
-    settingsPanel.classList.toggle('flex');
-}
-
-// --- VIEW MANAGEMENT ---
-
-function setView(viewName) {
-    gameState.currentView = viewName;
-    menuScreen.classList.add('hidden');
-    mainGameWrapper.classList.add('hidden'); // Use wrapper for grid layout
-    charSelectScreen.classList.add('hidden');
-    
-    // Manage Status Bar Visibility
-    enemyStatusCard.classList.add('hidden');
-    actionHeader.textContent = 'Actions';
-
-    if (viewName === 'menu') {
-        menuScreen.classList.remove('hidden');
-    } else if (viewName === 'select') {
-        charSelectScreen.classList.remove('hidden');
-        renderCharacterSelection();
-    } else if (viewName === 'dungeon') {
-        mainGameWrapper.classList.remove('hidden');
-        DungeonManager.renderDungeonActions();
-        updateCombatUI(); 
-    } else if (viewName === 'combat') {
-        mainGameWrapper.classList.remove('hidden');
-        enemyStatusCard.classList.remove('hidden');
-        actionHeader.textContent = 'Combat Actions';
-        renderCombatActions();
-        updateCombatUI();
-    }
-}
-
-
-// --- CHARACTER SELECTION LOGIC ---
-
-function renderCharacterSelection() {
-    const charList = document.getElementById('character-list');
-    charList.innerHTML = '';
-    let selectedCharId = null;
-
-    CHARACTERS.forEach(char => {
-        const card = document.createElement('div');
-        card.classList.add('char-card', 'section-box', 'p-4', 'rounded-lg', 'space-y-1');
-        card.dataset.id = char.id;
-        card.innerHTML = `
-            <h4 class="text-xl font-bold text-accent-color">${char.name}</h4>
-            <p class="text-sm">${char.description}</p>
-            <p class="text-xs"><strong>HP:</strong> ${char.baseStats.maxHP} | <strong>DEF:</strong> ${char.baseStats.defense} | <strong>SPD:</strong> ${char.baseStats.speed}</p>
-            <p class="text-xs"><strong>Passive:</strong> ${char.uniquePassive.name}</p>
-        `;
-
-        card.addEventListener('click', () => {
-            document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
-            card.classList.add('selected');
-            selectedCharId = char.id;
-            document.getElementById('start-combat-btn').classList.remove('hidden');
-        });
-        charList.appendChild(card);
-    });
-
-    document.getElementById('start-combat-btn').onclick = () => {
-        if (selectedCharId) {
-            startNewGame(selectedCharId);
-        }
-    };
-}
-
-// --- GAME STARTUP ---
-
-function startNewGame(charId) {
-    const selectedCharData = CHARACTERS.find(c => c.id === charId);
-    
-    // 1. Initialize Player
-    gameState.player = createEntityFromTemplate(selectedCharData);
-    
-    // 2. Initialize Dungeon State
-    gameState.dungeonState = {
-        currentAreaId: 'erebos',
-        currentRoomIndex: 0,
-        roomsCleared: 0,
-        roomsUntilBoss: AREA_DATA['erebos'].totalRooms - 1, 
-        currentRoomType: null,
-        inventory: [],
-        unlockedAbilities: [],
-    };
-
-    // 3. Reset Combat State
-    gameState.turn = 1;
-    gameState.playerAction = null;
-    gameState.enemyAction = null;
-    gameState.enemy = null;
-
-    // 4. Clear UI and begin the dungeon
-    combatLog.innerHTML = '';
-    dialogueText.textContent = `Welcome, ${gameState.player.name}, to the ancient catacombs of Erebos!`;
-    log(`Welcome, ${gameState.player.name}, to the ancient catacombs of Erebos!`, 'log-special');
-
-    // 5. Start Dungeon Progression
-    DungeonManager.nextRoom();
-}
-
-function updateCombatUI() {
-    // Player status is always updated
-    updateHealthDisplay(gameState.player, playerStatus);
-    playerStatus.name.textContent = gameState.player.name;
-    playerSpriteName.textContent = gameState.player.name;
-
-    // Enemy status is only updated if an enemy exists (i.e., we are in combat)
-    if (gameState.enemy) {
-        updateHealthDisplay(gameState.enemy, enemyStatus);
-        enemyStatus.name.textContent = gameState.enemy.name;
-        enemySpriteName.textContent = gameState.enemy.name;
-        enemyStatusCard.classList.remove('hidden');
-        visualContext.textContent = `VS ${gameState.enemy.name} | Turn ${gameState.turn}`;
-        enemySprite.classList.remove('hidden');
-    } else {
-        enemyStatusCard.classList.add('hidden');
-        visualContext.textContent = `In the dungeon: Room ${gameState.dungeonState.roomsCleared + 1}`;
-        enemySprite.classList.add('hidden');
-    }
-    
-    // Dungeon progress update
-    const area = AREA_DATA[gameState.dungeonState.currentAreaId];
-    areaDisplay.textContent = `Area: ${area.name}`;
-    roomProgressDisplay.textContent = `Room ${gameState.dungeonState.roomsCleared + 1}/${area.totalRooms}`;
-
-    // Inventory and Abilities update
-    renderInventoryAndAbilities();
-
-    passTurnBtn.classList.add('hidden'); 
-    
-    // Disable action buttons if an action has been chosen (only relevant in combat)
-    const buttons = actionButtonsDiv.querySelectorAll('button');
-    buttons.forEach(btn => btn.disabled = gameState.playerAction !== null && gameState.currentView === 'combat');
-}
-
-function renderInventoryAndAbilities() {
-    // Render Inventory
-    inventoryList.innerHTML = '';
-    if (gameState.dungeonState.inventory.length === 0) {
-        inventoryList.innerHTML = '<li class="text-gray-600">No items found yet.</li>';
-    } else {
-        gameState.dungeonState.inventory.forEach(item => {
-            const li = document.createElement('li');
-            li.innerHTML = `<strong>${item.name}</strong> (x${item.qty}): ${item.description}`;
-            inventoryList.appendChild(li);
-        });
-    }
-
-    // Render Base and Unlocked Abilities
-    abilityList.innerHTML = '';
-    const allAbilities = gameState.player.abilities.filter(a => !a.isHidden);
-    
-    allAbilities.forEach(ability => {
-        const li = document.createElement('li');
-        li.textContent = `${ability.name} (${ability.type})`;
-        abilityList.appendChild(li);
-    });
-    
-    if (gameState.dungeonState.unlockedAbilities.length > 0) {
-        gameState.dungeonState.unlockedAbilities.forEach(ability => {
-            const li = document.createElement('li');
-            li.textContent = `⭐ ${ability.name} (NEW!)`;
-            abilityList.appendChild(li);
-        });
-    }
-}
-
-// --- DUNGEON MANAGEMENT LOGIC ---
-
-const DungeonManager = {
-    
-    getCurrentArea: () => AREA_DATA[gameState.dungeonState.currentAreaId],
-    
-    /**
-     * Advances to the next room, determining if it's a boss fight or a combat room.
-     */
-    nextRoom: () => {
-        const ds = gameState.dungeonState;
-        const area = DungeonManager.getCurrentArea();
-        
-        // Check for game end
-        if (ds.roomsCleared >= area.totalRooms) {
-            dialogueText.textContent = `You have cleared ${area.name}! Victory!`;
-            actionButtonsDiv.innerHTML = '<button onclick="location.reload()" class="action-btn w-full">Start New Game</button>';
-            setView('dungeon');
-            return;
-        }
-
-        ds.roomsCleared++;
-        
-        if (ds.roomsCleared === area.bossRoomIndex) {
-            DungeonManager.generateBossRoom(area);
-        } else {
-            DungeonManager.generateRandomRoom(area);
-        }
-        
-        // Note: setView is handled by startCombatEncounter/generateBossRoom
-    },
-
-    /**
-     * Randomly picks a room type (FIXED to Combat only) and initializes it.
-     */
-    generateRandomRoom: (area) => {
-        // Since roomTypes is fixed to ['Combat'], we only generate combat rooms
-        const roomType = 'Combat';
-        gameState.dungeonState.currentRoomType = roomType;
-
-        dialogueText.textContent = area.roomDescriptions[roomType];
-        log(`Entering Room ${gameState.dungeonState.roomsCleared}: ${roomType}`, 'log-special');
-
-        DungeonManager.startCombatEncounter(area);
-    },
-    
-    /**
-     * Initializes a combat sequence with a random enemy from the pool.
-     */
-    startCombatEncounter: (area) => {
-        const enemyPool = area.enemyPool;
-        const randomEnemyId = enemyPool[Math.floor(Math.random() * enemyPool.length)];
-        const enemyTemplate = ENEMY_TEMPLATES[randomEnemyId];
-
-        gameState.enemy = createEntityFromTemplate(enemyTemplate);
-        
-        log(`A wild ${gameState.enemy.name} appears!`, 'log-loss');
-        dialogueText.textContent = `${area.roomDescriptions['Combat']} The fight begins!`;
-        setView('combat');
-    },
-
-    /**
-     * Placeholder for Boss Room logic.
-     */
-    generateBossRoom: (area) => {
-        gameState.dungeonState.currentRoomType = 'Boss';
-        dialogueText.textContent = area.roomDescriptions['Boss'];
-        log(`BOSS ROOM: ${area.bossId} awaits!`, 'log-loss');
-        
-        // For now, start combat with a super-powered Goblin
-        const bossTemplate = JSON.parse(JSON.stringify(ENEMY_TEMPLATES['goblin']));
-        bossTemplate.name = "The Goblin King";
-        bossTemplate.baseStats.maxHP = 150;
-        bossTemplate.baseStats.currentHP = 150;
-        bossTemplate.baseStats.defense = 4;
-        
-        gameState.enemy = createEntityFromTemplate(bossTemplate);
-        setView('combat');
-    },
-
-    /**
-     * Renders interaction buttons for non-combat rooms (mostly unused now).
-     */
-    renderDungeonActions: () => {
-        actionButtonsDiv.innerHTML = '';
-        
-        const nextButton = document.createElement('button');
-        nextButton.textContent = 'Continue Deeper';
-        nextButton.classList.add('action-btn', 'w-full', 'col-span-full');
-        nextButton.onclick = () => DungeonManager.nextRoom();
-        actionButtonsDiv.appendChild(nextButton);
-    },
-    
-    /**
-     * Called when a combat encounter is won.
-     */
-    onCombatWin: () => {
-        gameState.enemy = null; // Clear enemy state
-        log(`You take a moment to recover.`, 'log-special');
-        
-        // Directly proceed to the next room on combat win
-        DungeonManager.nextRoom();
-    }
-}
-
-
-// --- COMBAT CORE MECHANICS (RETAINED) ---
-
-/**
- * 1. Player selects an action. This stores the action and triggers the Enemy AI.
- */
-function executeAbility(ability) {
-    if (gameState.playerAction) return; 
-
-    // ZECTUS DYNAMIC ATTACK RESOLUTION
-    let resolvedAbility = ability;
-    if (ability.isZectusMainAttack) {
-        resolvedAbility = getZectusCurrentAbility(gameState.player.baseStats.tri_sword_state);
-        if (!resolvedAbility) {
-            resolvedAbility = gameState.player.abilities.find(a => a.name === 'Cycle');
-        }
-    }
-    
-    gameState.playerAction = resolvedAbility;
-    log(`${gameState.player.name} chooses ${resolvedAbility.name}...`, 'log-special');
-    
-    updateCombatUI();
-
-    selectEnemyAction();
-    
-    resolveCombatRound(); // Now calls async function directly
-}
-
-/**
- * Helper function for Zectus: gets the actual ability stats based on weapon state
- */
-function getZectusCurrentAbility(state) {
-    const zectusData = CHARACTERS.find(c => c.id === 'zectus');
-    if (!zectusData) return null;
-    
-    const abilityName = `Tri-Sword: ${state}`;
-    return zectusData.abilities.find(a => a.name === abilityName);
-}
-
-
-/**
- * Enemy AI selects its action.
- */
-function selectEnemyAction() {
-    if (gameState.enemy.baseStats.effects.includes('Stagger')) {
-        gameState.enemyAction = { name: 'Staggered', type: 'NONE' };
-        log(`${gameState.enemy.name} is Staggered and cannot act!`, 'log-loss');
-        return;
-    }
-
-    const enemyAbilities = gameState.enemy.abilities;
-    const enemyAttack = enemyAbilities.find(a => a.type === 'ATTACK');
-    const enemyDefense = enemyAbilities.find(a => a.type === 'DEFENSE');
-
-    let chosenAbility;
-    if (enemyDefense && Math.random() < 0.5) {
-        chosenAbility = enemyDefense;
-    } else {
-        chosenAbility = enemyAttack;
-    }
-    
-    gameState.enemyAction = chosenAbility;
-    log(`${gameState.enemy.name} prepares to use ${chosenAbility.name}!`, 'log-special');
-}
-
-
-/**
- * 2. Main Turn Resolution: Determines action order and resolves conflict.
- * Now an async function to wait for visual feedback during Clash.
- */
-async function resolveCombatRound() {
-    const playerAbility = gameState.playerAction;
-    const enemyAbility = gameState.enemyAction;
-
-    if (checkGameOver()) return;
-
-    // Check Player Stagger
-    if (gameState.player.baseStats.effects.includes('Stagger')) {
-        log(`${gameState.player.name} is Staggered and skips their action!`, 'log-loss');
-        
-        if (enemyAbility.type !== 'ATTACK' || enemyAbility.type === 'NONE') {
-            log(`...continuing to cleanup.`, 'log-special');
-            endTurnCleanup();
-            return;
-        } 
-        
-        log(`${gameState.enemy.name} attacks while ${gameState.player.name} is Staggered!`, 'log-win');
-        executeSingleAction(gameState.enemy, enemyAbility, gameState.player);
-        if (checkGameOver()) return;
-        endTurnCleanup();
-        return;
-    }
-
-
-    const pType = playerAbility ? playerAbility.type : 'NONE';
-    const eType = enemyAbility ? enemyAbility.type : 'NONE';
-    const pSpeed = gameState.player.baseStats.speed || 0;
-    const eSpeed = gameState.enemy.baseStats.speed || 0;
-    
-    log(`Player Speed: ${pSpeed}, Enemy Speed: ${eSpeed}.`, 'log-special');
-
-    // Case 1: Both ATTACK -> CLASH
-    if (pType === 'ATTACK' && eType === 'ATTACK') {
-        log(`Both attack! Initiating CLASH...`, 'log-special');
-        await handleClash(playerAbility, enemyAbility); // WAIT for visualizer
-        
-        if (checkGameOver()) return; 
-    
-    // Case 2: Mixed Actions or Non-Attack vs Attack -> Speed determines priority
-    } else {
-        let first, second;
-        let firstAbility, secondAbility;
-
-        if (pSpeed > eSpeed) {
-            first = gameState.player;
-            firstAbility = playerAbility;
-            second = gameState.enemy;
-            secondAbility = enemyAbility;
-        } else if (eSpeed > pSpeed) {
-            first = gameState.enemy;
-            firstAbility = enemyAbility;
-            second = gameState.player;
-            secondAbility = playerAbility; 
-        } else {
-            // Speed Tie: Default to Player acting first 
-            first = gameState.player;
-            firstAbility = playerAbility;
-            second = gameState.enemy;
-            secondAbility = enemyAbility;
-            log(`Speed tie! ${first.name} acts first.`, 'log-special');
-        }
-
-        // --- Resolve First Action ---
-        log(`${first.name} (${firstAbility.name}) acts first.`, 'log-special');
-        // No visualizer for single action, execution is synchronous
-        executeSingleAction(first, firstAbility, second); 
-        if (checkGameOver()) return;
-        
-        // --- Resolve Second Action ---
-        if (second.baseStats.currentHP > 0 && secondAbility.type !== 'NONE') {
-            if (second.baseStats.effects.includes('Stagger')) {
-                log(`${second.name} was **Staggered** and skips their action!`, 'log-loss');
-            } else {
-                log(`${second.name} (${secondAbility.name}) acts second.`, 'log-special');
-                executeSingleAction(second, secondAbility, first);
-            }
-        } else if (secondAbility.type === 'NONE') {
-            log(`${second.name} skips their turn.`, 'log-loss');
-        }
-        
-        if (checkGameOver()) return; 
-    }
-    
-    // Cleanup happens once the execution path is complete
-    endTurnCleanup(); 
-}
-
-/**
- * Resolves a single action (Defense, Special, or Attack) outside of a clash.
- */
-function executeSingleAction(attacker, ability, target) {
-    if (target.baseStats.currentHP <= 0) return; 
-    if (!ability) return; 
-
-    // Zectus: resolve dynamic ability
-    if (attacker.id === 'zectus' && ability.isZectusMainAttack) {
-        ability = getZectusCurrentAbility(attacker.baseStats.tri_sword_state);
-        if (!ability) {
-             log(`CRITICAL: Zectus's current weapon state (${attacker.baseStats.tri_sword_state}) is invalid.`, 'log-loss');
-             return;
-        }
-    }
-
-    if (ability.type === 'DEFENSE') {
-        if (ability.defenseEffect === 'NegateNextHit') {
-            if (!Array.isArray(target.baseStats.effects)) { target.baseStats.effects = []; }
-            target.baseStats.effects.push('NegateNextHit');
-        }
-        log(`${attacker.name} successfully executes a defensive maneuver!`, 'log-win');
-        
-    } else if (ability.type === 'SPECIAL') {
-        // Balter's Grapple logic
-        if (ability.name === 'Grapple') {
-            const attackerRoll = rollDie(ability.dice || 10); 
-            const targetGrappleDie = target.baseStats.grapple_die || 8;
-            const targetRoll = rollDie(targetGrappleDie);
-            
-            // NEW LOGGING: Show Grapple Rolls
-            log(`Grapple Roll: ${attacker.name} d${ability.dice || 10} -> **${attackerRoll}** | ${target.name} d${targetGrappleDie} -> **${targetRoll}**`, 'log-special');
-
-            if (attackerRoll > targetRoll) {
-                if (!Array.isArray(target.baseStats.effects)) { target.baseStats.effects = []; }
-                target.baseStats.effects.push('Grappled');
-                log(`${attacker.name} successfully grapples ${target.name}! ${target.name} auto-loses the next clash.`, 'log-win');
-            } else {
-                log(`${attacker.name} fails to grapple ${target.name}.`, 'log-loss');
-            }
-        }
-        
-    } else if (ability.type === 'SWITCH') {
-        // Zectus Cycle logic: deals 2 damage to TARGET on activation
-        let currentWeapon = attacker.baseStats.tri_sword_state;
-        const weapons = ['Scythe', 'Trident', 'Hammer'];
-        let currentIndex = weapons.indexOf(currentWeapon);
-        let nextIndex = (currentIndex + 1) % weapons.length;
-        
-        attacker.baseStats.tri_sword_state = weapons[nextIndex];
-        
-        const damage = ability.baseAttack || 2; 
-        target.baseStats.currentHP = Math.max(0, target.baseStats.currentHP - damage); 
-        log(`${attacker.name} cycles weapon to ${weapons[nextIndex]}. Deals ${damage} damage to ${target.name}!`, 'log-win');
-
-    } else if (ability.type === 'ATTACK') {
-        // NEW: Generate rolls here for logging
-        const diceRoll = rollDie(ability.dice || 1);
-        const coinBonus = rollCoins(ability.coins || 0);
-
-        // NEW LOGGING: Show attack rolls
-        log(`Attack Rolls: D${ability.dice || 1} -> **${diceRoll}** | Coins (${ability.coins || 0}) -> **${coinBonus}**`, 'log-damage');
-
-        applyDamage(ability, attacker, target, coinBonus, diceRoll);
-        
-        if (ability.statusEffect === 'Stagger') {
-            if (!Array.isArray(target.baseStats.effects)) { target.baseStats.effects = []; }
-            target.baseStats.effects.push('Stagger');
-            log(`${target.name} is **Staggered** and will skip their next turn!`, 'log-loss');
-        }
-    }
-    
-    // Check for **Self-Stagger** after action (specifically for Striker's Heavy Blow)
-    if (ability.selfStagger) {
-        if (!Array.isArray(attacker.baseStats.effects)) { attacker.baseStats.effects = []; }
-        attacker.baseStats.effects.push('Stagger');
-        log(`${attacker.name} used a powerful move and is now **Staggered**!`, 'log-loss');
-    }
-}
-
-
-/**
- * 3. The Core Clash Logic (When both characters attack)
- * Now an async function to wait for the visualizer.
- */
-async function handleClash(pAbility, eAbility) { 
-    try {
-        if (!pAbility || !eAbility) {
-            log(`CRITICAL: Missing Player or Enemy ability object in Clash.`, 'log-loss');
-            return; 
-        }
-
-        if (!Array.isArray(gameState.enemy.baseStats.effects)) { gameState.enemy.baseStats.effects = []; }
-        if (!Array.isArray(gameState.player.baseStats.effects)) { gameState.player.baseStats.effects = []; }
-
-        let resolvedPAbility = pAbility;
-        if (gameState.player.id === 'zectus' && pAbility.isZectusMainAttack) {
-            resolvedPAbility = getZectusCurrentAbility(gameState.player.baseStats.tri_sword_state);
-            if (!resolvedPAbility) {
-                 log(`CRITICAL: Zectus's current weapon state (${gameState.player.baseStats.tri_sword_state}) is invalid for clash.`, 'log-loss');
-                 return;
-            }
-        }
-
-        const isPiledriver = resolvedPAbility.name === 'Piledriver';
-        const basePlayerCoins = (typeof resolvedPAbility.coins === 'number') ? resolvedPAbility.coins : 0;
-        const baseEnemyCoins = (typeof eAbility.coins === 'number') ? eAbility.coins : 0;
-        const pDice = (typeof resolvedPAbility.dice === 'number' && resolvedPAbility.dice > 0) ? resolvedPAbility.dice : 1;
-        const eDice = (typeof eAbility.dice === 'number' && eAbility.dice > 0) ? eAbility.dice : 1;
-        
-        // Striker Passive: Coin Bonus
-        const strikerBonus = (gameState.player.id === 'striker' && gameState.player.baseStats.consecutive_rounds > 0) 
-            ? gameState.player.baseStats.consecutive_rounds 
-            : 0;
-
-        const pCoins = basePlayerCoins + strikerBonus;
-        const eCoins = baseEnemyCoins;
-
-        // Perform actual rolls *before* starting the animation
-        const playerRoll = rollDie(pDice);
-        const enemyRoll = rollDie(eDice);
-        const playerCoinBonus = rollCoins(pCoins); 
-        const enemyCoinBonus = rollCoins(eCoins); 
-
-        // NEW LOGGING: Show Clash Rolls
-        log(`${gameState.player.name} Clash Rolls: D${pDice} -> **${playerRoll}** | Coins (${pCoins}) -> **${playerCoinBonus}**`, 'log-damage');
-        log(`${gameState.enemy.name} Clash Rolls: D${eDice} -> **${enemyRoll}** | Coins (${eCoins}) -> **${enemyCoinBonus}**`, 'log-damage');
-
-
-        // --- NEW: WAIT FOR VISUALIZATION TO COMPLETE ---
-        await startClashVisuals(pDice, pCoins, eDice, eCoins, playerRoll, playerCoinBonus, enemyRoll, enemyCoinBonus); 
-
-        const playerClashValue = BASE_CLASH_VALUE + playerRoll + playerCoinBonus;
-        const enemyClashValue = BASE_CLASH_VALUE + enemyRoll + enemyCoinBonus;
-        
-        let winner, loser, winnerAbility, winnerCoinBonus, winnerDiceRoll;
-
-        // --- 5. DETERMINE WINNER ---
-        const isEnemyGrappled = gameState.enemy.baseStats.effects.includes('Grappled');
-
-        if (isEnemyGrappled && !isPiledriver && gameState.player.id === 'balter') { 
-            winner = gameState.player;
-            loser = gameState.enemy;
-            winnerAbility = resolvedPAbility;
-            winnerCoinBonus = playerCoinBonus;
-            winnerDiceRoll = playerRoll;
-            log(`${gameState.enemy.name} is Grappled and automatically loses the clash!`, 'log-loss');
-        } else if (playerClashValue >= enemyClashValue) {
-            winner = gameState.player;
-            loser = gameState.enemy;
-            winnerAbility = resolvedPAbility;
-            winnerCoinBonus = playerCoinBonus;
-            winnerDiceRoll = playerRoll;
-            log(`${winner.name} wins the clash! (Clash: **${playerClashValue}** vs **${enemyClashValue}**)`, 'log-win');
-        } else {
-            winner = gameState.enemy;
-            loser = gameState.player;
-            winnerAbility = eAbility;
-            winnerCoinBonus = enemyCoinBonus; 
-            winnerDiceRoll = enemyRoll;  
-            log(`${winner.name} wins the clash! (Clash: **${enemyClashValue}** vs **${playerClashValue}**)`, 'log-loss');     
-        }
-
-
-        // --- 6. APPLY DAMAGE ---
-        if (winnerAbility && typeof winnerAbility === 'object') {
-            applyDamage(winnerAbility, winner, loser, winnerCoinBonus, winnerDiceRoll); 
-        } else {
-            log(`Clash finished but winner ability was undefined or invalid. No damage applied.`, 'log-loss');
-        }
-
-        // 7. Balter's "The Old One, Two" Passive
-        if (winner.id === 'balter' && winner.uniquePassive.type === 'ClashWinBonus' && loser.baseStats.currentHP > 0) {
-            const bonusDiceMax = winner.uniquePassive.dice;
-            const bonusDamageRoll = rollDie(bonusDiceMax);
-            
-            log(`Passive Roll: d${bonusDiceMax} -> **${bonusDamageRoll}**`, 'log-damage');
-
-            // UPDATED: Balter's passive ignores defense
-            const bonusDamage = bonusDamageRoll; 
-            
-            loser.baseStats.currentHP = Math.max(0, loser.baseStats.currentHP - bonusDamage);
-            log(`Balter follows up with "The Old One, Two"! **Ignores Defense**, dealing ${bonusDamage} extra damage!`, 'log-win');
-        }
-        
-        // 8. Apply Stagger to LOSER
-        if (winnerAbility.statusEffect === 'Stagger') {
-            if (!Array.isArray(loser.baseStats.effects)) { loser.baseStats.effects = []; }
-            loser.baseStats.effects.push('Stagger');
-            log(`${loser.name} is **Staggered** and will skip their next turn!`, 'log-loss');
-        }
-        
-        // 9. Apply **Self-Stagger** to WINNER (Striker's Heavy Blow)
-        if (winnerAbility.selfStagger) {
-            if (!Array.isArray(winner.baseStats.effects)) { winner.baseStats.effects = []; }
-            winner.baseStats.effects.push('Stagger');
-            log(`${winner.name} used a powerful move and is now **Staggered**!`, 'log-loss');
-        }
-        
-    } catch (error) {
-        log(`CRITICAL CLASH ERROR: Clash resolution failed. Check console for details.`, 'log-loss');
-        console.error("Clash resolution failed:", error);
-    }
-}
-
-/**
- * 4. Damage Application (called by Clash or Single Action)
- */
-function applyDamage(ability, attacker, target, coinBonus = rollCoins(ability.coins), diceRoll = rollDie(ability.dice)) {
-    if (!Array.isArray(target.baseStats.effects)) { target.baseStats.effects = []; }
-
-    let damage = (ability.baseAttack || 0) + (coinBonus || 0) + (diceRoll || 0); // Total raw power (Base + Coin + Dice)
-    let defense = target.baseStats.defense; 
-    let finalDamage = 0;
-
-    const negateIndex = target.baseStats.effects.indexOf('NegateNextHit');
-    let damageNegated = false;
-
-    if (negateIndex !== -1) {
-        log(`${target.name} Phases, negating all incoming damage!`, 'log-win');
-        target.baseStats.effects.splice(negateIndex, 1); // Remove effect
-        damageNegated = true;
-    }
-    
-    // Apply Defense if damage isn't negated
-    if (damageNegated) {
-        finalDamage = 0;
-    } else {
-        finalDamage = Math.max(0, damage - defense);
-
-        // LOGGING: Detail the defense subtraction
-        if (defense > 0) {
-            const defenseLog = finalDamage === 0 ? "Damage blocked!" : `${finalDamage} Final Damage.`;
-            log(`[Calculation: ${ability.damageType}] Raw Power (**${damage}**) - **${defense}** Defense = ${defenseLog}`, 'log-damage');
-        } else {
-             log(`[Calculation: ${ability.damageType}] Raw Power (**${damage}**). Defense is 0.`, 'log-damage');
-        }
-    }
-
-    target.baseStats.currentHP = Math.max(0, target.baseStats.currentHP - finalDamage);
-    
-    // Original result line, now secondary to the calculation log
-    log(`${attacker.name} strikes with ${ability.name}! Dealt **${finalDamage}** damage.`, 'log-damage');
-    
-    if (target.id === 'shutenmaru') {
-        target.baseStats.lastDamageTaken = finalDamage; 
-    }
-    
-    if (attacker.id === 'shutenmaru' && attacker.uniquePassive.type === 'RollTrigger' && (diceRoll || 0) === attacker.uniquePassive.triggerValue) {
-        const healAmount = target.baseStats.lastDamageTaken; 
-        attacker.baseStats.currentHP = Math.min(attacker.baseStats.maxHP, attacker.baseStats.currentHP + healAmount);
-        log(`Chrono-Fist triggered! Shuten-Maru heals back ${healAmount} damage.`, 'log-win');
-    }
-
-    if (ability.name === 'Piledriver' && ability.removesTargetStatus === 'Grappled') {
-        target.baseStats.effects = target.baseStats.effects.filter(e => e !== 'Grappled');
-        log(`${target.name} is released from the grapple.`, 'log-special');
-    }
-}
-
-
-/**
- * 5. End of Turn Cleanup & Setup for Next Turn
- */
-function endTurnCleanup() {
-    // 1. Clear Stagger effect for both player and enemy
-    gameState.player.baseStats.effects = gameState.player.baseStats.effects.filter(e => e !== 'Stagger');
-    gameState.enemy.baseStats.effects = gameState.enemy.baseStats.effects.filter(e => e !== 'Stagger');
-    
-    // 2. Striker: Increase consecutive rounds
-    if (gameState.player.id === 'striker') {
-        gameState.player.baseStats.consecutive_rounds++;
-    }
-
-    if (checkGameOver()) return;
-
-    // 3. Reset actions for the next turn
-    gameState.playerAction = null;
-    gameState.enemyAction = null;
-    gameState.turn++;
-    
-    log(`--- Start of Turn ${gameState.turn} ---`, 'log-special');
-
-    // 4. Re-render UI
-    updateCombatUI();
-    renderCombatActions();
-}
-
-/**
- * Checks for a winner/loser and displays the game over screen or returns to dungeon.
- */
-function checkGameOver() {
-    updateCombatUI(); 
-    
-    if (gameState.player.baseStats.currentHP <= 0) {
-        gameState.player.baseStats.status = 'Defeated';
-        log(`${gameState.player.name} has been defeated. Game Over.`, 'log-loss');
-        dialogueText.textContent = "You have been vanquished.";
-        actionButtonsDiv.innerHTML = '<button onclick="location.reload()" class="action-btn w-full">Return to Menu</button>';
-        return true;
-    } else if (gameState.enemy && gameState.enemy.baseStats.currentHP <= 0) {
-        gameState.enemy.baseStats.status = 'Defeated';
-        log(`${gameState.enemy.name} is vanquished!`, 'log-win');
-        dialogueText.textContent = "The enemy is defeated. Proceeding deeper into the dungeon...";
-        
-        // Reset Striker's consecutive rounds counter after combat win
-        if (gameState.player.id === 'striker') {
-            gameState.player.baseStats.consecutive_rounds = 0;
-        }
-
-        // Return to dungeon exploration view
-        DungeonManager.onCombatWin();
-        return true;
-    }
-    return false;
-}
-
-
-/**
- * 6. Action Rendering (dynamically creates buttons)
- */
-function renderCombatActions() {
-    actionButtonsDiv.innerHTML = '';
-    
-    if (gameState.currentView !== 'combat') {
-        return DungeonManager.renderDungeonActions();
-    }
-    
-    const playerAbilities = gameState.player.abilities;
-    const isEnemyGrappled = gameState.enemy.baseStats.effects.includes('Grappled'); 
-    const currentWeapon = gameState.player.baseStats.tri_sword_state; 
-    
-    const renderableAbilities = playerAbilities.filter(ability => !ability.isHidden);
-
-    renderableAbilities.forEach(ability => {
-        const btn = document.createElement('button');
-        btn.classList.add('combat-btn');
-        let displayName = ability.name;
-
-        if (ability.name === 'Piledriver') {
-            btn.disabled = !isEnemyGrappled || gameState.playerAction !== null;
-            if (isEnemyGrappled) {
-                btn.classList.add('combo-ready');
-            } else {
-                btn.classList.remove('combo-ready');
-            }
-        }
-        
-        if (gameState.player.id === 'zectus' && ability.isZectusMainAttack) {
-            displayName = `Tri-Sword: ${currentWeapon}`;
-            btn.classList.add('active-weapon-btn'); 
-        }
-
-        // Disable all buttons if action already chosen
-        if (gameState.playerAction !== null) {
-            btn.disabled = true;
-        }
-
-        btn.textContent = displayName;
-        btn.onclick = () => executeAbility(ability);
-        actionButtonsDiv.appendChild(btn);
-    });
-}
-
-
-// --- INITIALIZATION ---
-
-function init() {
-    // Since themes were disabled, enforce default theme
-    applyTheme('default'); 
-
-    setView('menu'); 
-
-    newGameBtn.addEventListener('click', () => setView('select'));
-
-    openSettingsBtn.addEventListener('click', toggleSettingsPanel);
-    closeSettingsBtn.addEventListener('click', toggleSettingsPanel);
-    
-    // Theme selection logic (currently disabled for simplicity)
-    themeOptionBtns.forEach(btn => {
-        btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
-    });
-}
-
-window.onload = init;
-    </script>
+        </div>
+    </div>
+
+    <!-- ABILITY TOOLTIP (absolute-positioned, shown on hover) -->
+    <div id="ability-tooltip" class="section-box p-2 hidden absolute z-50" role="tooltip" aria-hidden="true"></div>
+
+    <!-- CHARACTER INFO MODAL -->
+    <div id="char-info-modal" class="fixed inset-0 hidden items-center justify-center bg-black bg-opacity-60 z-60" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="section-box p-4 w-11/12 max-w-2xl">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-xl font-bold">Character Details</h3>
+                <button id="char-info-close" class="action-btn px-2 py-1">Close</button>
+            </div>
+            <div id="char-info-content" class="space-y-2 text-sm">
+                <!-- Abilities & descriptions populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- JS (main game logic) -->
+    <script src="main.js"></script>
 </body>
 </html>
