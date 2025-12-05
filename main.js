@@ -496,6 +496,18 @@ function startClashVisuals(pDiceMax, pCoins, eDiceMax, eCoins, pFinalRoll, pFina
 
 /* --- INIT / HOOKS --- */
 function init() {
+  // Defensive: some environments load this script before the DOM, so top-level DOM refs were captured as null.
+  // Ensure the main menu is visible immediately by re-querying and removing any 'hidden' state.
+  try {
+    const _menuScreen = document.getElementById('menu-screen');
+    if (_menuScreen) _menuScreen.classList.remove('hidden');
+
+    // If the body was hidden by a CSS helper, ensure it's visible.
+    if (document.body && document.body.classList.contains('hidden')) document.body.classList.remove('hidden');
+  } catch (e) {
+    /* swallow any errors here to avoid breaking init */
+  }
+
   applyTheme(localStorage.getItem('gameTheme') || 'default');
   setView('menu');
   newGameBtn && newGameBtn.addEventListener('click', () => setView('select'));
