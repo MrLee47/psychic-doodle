@@ -38,7 +38,7 @@ const BASE_CLASH_VALUE = 5;
 const ENEMY_TEMPLATES = {
   goblin: {
     id: 'goblin',
-    name: 'Gravel-Claw Goblin',
+    name: 'Krav Ma-Goblin',
     baseStats: { maxHP: 80, defense: 2, level: 1, currentHP: 80, status: 'Alive', effects: [], grapple_die: 6, gender: 'Male', speed: 2 },
     abilities: [
       { name: 'Gnaw Attack', type: 'ATTACK', damageType: 'Physical', baseAttack: 5, dice: 6, coins: 2 },
