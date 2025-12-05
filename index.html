@@ -20,6 +20,17 @@
             --log-loss: #b91c1c; /* Dark Red */
             --log-damage: #b45309; /* Dark Orange for damage */
         }
+
+        
+        *** Begin Patch
+*** Update File: index.html
+@@
+     </script>
++    <!-- Compact UI layout + runtime (injected) -->
++    <link rel="stylesheet" href="ui-layout.css">
++    <script src="ui-layout.js"></script>
+ </body>
+*** End Patch
         
         body {
             background-color: var(--primary-bg);
