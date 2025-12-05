@@ -3,13 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Game</title>
-    <script src="https://cdn.tailwindcss.com"></script>// shrink HP bars
-document.querySelectorAll('#player-hp-bar, #enemy-hp-bar').forEach(e => e.style.height = '10px');
-// move enemy status above animation
-(function(){ const enemy = document.getElementById('enemy-status-card'); const visuals = document.getElementById('visuals-panel'); const animation = document.getElementById('animation-slot'); if(enemy && visuals && animation) visuals.insertBefore(enemy, animation); })();
-// pin the log as a right sidebar (preview)
-(function(){ const log = document.getElementById('log-scroll-container'); if(!log) return; Object.assign(log.style, { position: 'fixed', right: '1rem', top: '50%', transform: 'translateY(-50%)', width: '260px', height: '80vh', zIndex: 40, overflowY: 'auto' }); const wrapper = document.getElementById('main-game-wrapper'); if(wrapper) wrapper.classList.add('sidebar-offset'); })();
+    <title>Chronicles of Heroes: Erebos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         /* UPDATED: Switched to a Cream/Black color scheme for light mode */
@@ -25,9 +20,6 @@ document.querySelectorAll('#player-hp-bar, #enemy-hp-bar').forEach(e => e.style.
             --log-loss: #b91c1c; /* Dark Red */
             --log-damage: #b45309; /* Dark Orange for damage */
         }
-
-        
-  
         
         body {
             background-color: var(--primary-bg);
@@ -156,7 +148,7 @@ document.querySelectorAll('#player-hp-bar, #enemy-hp-bar').forEach(e => e.style.
 
     <!-- MAIN MENU SCREEN -->
     <div id="menu-screen" class="flex flex-col items-center justify-center space-y-6 hidden min-h-screen">
-        <h1 class="text-5xl font-bold mb-8 text-accent-color">The Game</h1>
+        <h1 class="text-5xl font-bold mb-8 text-accent-color">Chronicles of Heroes</h1>
         <button id="new-game-btn" class="action-btn w-64">New Game</button>
         <button id="load-game-btn" class="action-btn w-64" disabled>Load Game (WIP)</button>
         <button id="open-settings-menu-btn" class="action-btn w-64">Settings</button>
@@ -280,7 +272,7 @@ document.querySelectorAll('#player-hp-bar, #enemy-hp-bar').forEach(e => e.style.
     <!-- JAVASCRIPT LOGIC -->
     <script type="text/javascript">
 /**
- * The Game: Core Game and Combat Logic
+ * Chronicles of Heroes: Core Game and Combat Logic
  * Includes: Theme Switching, Character Selection, Combat, and Dungeon Management.
  */
 
@@ -312,7 +304,7 @@ const BASE_CLASH_VALUE = 5;
 const ENEMY_TEMPLATES = {
     'goblin': {
         id: 'goblin',
-        name: 'Krava Ma-Goblin',
+        name: 'Gravel-Claw Goblin',
         baseStats: { maxHP: 80, defense: 2, level: 1, currentHP: 80, status: 'Alive', effects: [], grapple_die: 6, gender: 'Male', speed: 2 },
         abilities: [
             { name: 'Gnaw Attack', type: 'ATTACK', damageType: 'Physical', baseAttack: 5, dice: 6, coins: 2, },
@@ -1490,13 +1482,6 @@ function init() {
 }
 
 window.onload = init;
-
-     </script>
-<link rel="stylesheet" href="ui-layout.css">
-<script src="ui-layout.js"></script>
-  
+    </script>
 </body>
-
-        
-    
 </html>
