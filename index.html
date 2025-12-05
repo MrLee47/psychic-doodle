@@ -4,7 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Game</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>// shrink HP bars
+document.querySelectorAll('#player-hp-bar, #enemy-hp-bar').forEach(e => e.style.height = '10px');
+// move enemy status above animation
+(function(){ const enemy = document.getElementById('enemy-status-card'); const visuals = document.getElementById('visuals-panel'); const animation = document.getElementById('animation-slot'); if(enemy && visuals && animation) visuals.insertBefore(enemy, animation); })();
+// pin the log as a right sidebar (preview)
+(function(){ const log = document.getElementById('log-scroll-container'); if(!log) return; Object.assign(log.style, { position: 'fixed', right: '1rem', top: '50%', transform: 'translateY(-50%)', width: '260px', height: '80vh', zIndex: 40, overflowY: 'auto' }); const wrapper = document.getElementById('main-game-wrapper'); if(wrapper) wrapper.classList.add('sidebar-offset'); })();
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         /* UPDATED: Switched to a Cream/Black color scheme for light mode */
@@ -1489,7 +1494,6 @@ window.onload = init;
      </script>
 <link rel="stylesheet" href="ui-layout.css">
 <script src="ui-layout.js"></script>
-</body>
   
 </body>
 
