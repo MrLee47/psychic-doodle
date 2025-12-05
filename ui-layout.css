@@ -1,29 +1,111 @@
-/* ui-layout.css - compact layout and UI tweaks */
-:root{--compact-log-width:280px;--portrait-size:96px}
+/* ui-layout.css - compact layout and UI tweaks (updated) */
+:root{
+  --compact-log-width: 260px;
+  --portrait-size:96px;
+  --sidebar-gap: 1.25rem; /* space between main content and sidebar */
+}
+
 /* Compact HP bars */
-#player-hp-bar, #enemy-hp-bar{height:10px !important;border-radius:9999px}
-#player-hp-bar.hp-inner, #enemy-hp-bar.hp-inner{height:100%}
+#player-hp-bar, #enemy-hp-bar {
+  height: 10px !important;
+  border-radius: 9999px;
+}
+#player-hp-bar.hp-inner, #enemy-hp-bar.hp-inner { height:100% }
+
 /* Smaller container paddings for compact mode */
-#main-game-wrapper .section-box{padding:10px}
-/* Event log as a right sidebar */
-.event-log-sidebar{position:sticky;top:1rem;height:calc(100vh - 4rem);overflow-y:auto;width:var(--compact-log-width);align-self:start}
-/* Ensure the visuals panel doesn't push the sidebar */
-#main-game-wrapper{align-items:start}
+#main-game-wrapper .section-box { padding: 10px }
+
+/* Event log as a right sidebar (centered vertically) */
+.event-log-sidebar {
+  position: fixed;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: var(--compact-log-width);
+  max-height: 80vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 12px;
+  z-index: 40;
+
+  /* cosmetics so it doesn't feel glued to the edge */
+  border-left: 1px solid rgba(0,0,0,0.06);
+  background: var(--section-bg);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+  border-radius: 8px;
+}
+
+/* When sidebar is shown, ensure main content leaves room */
+#main-game-wrapper.sidebar-offset {
+  margin-right: calc(var(--compact-log-width) + var(--sidebar-gap));
+}
+
+/* Make the visuals panel and game content have consistent centering */
+#visuals-panel { display:flex; flex-direction:column; align-items:center; justify-content:center; }
+#game-container { display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; }
+
 /* Combined area / room info */
-#combined-area{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
-#combined-area #dialogue-text{flex:1;margin-left:8px}
+#combined-area { display:flex; justify-content:space-between; gap:8px; align-items:flex-start; }
+#combined-area #dialogue-text { flex:1; margin-left:8px }
+
 /* Inventory & actions compact grid */
-#inventory-attacks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-#inventory-attacks .section-box{padding:8px}
+#inventory-attacks { display:grid; grid-template-columns:1fr 1fr; gap:8px }
+#inventory-attacks .section-box { padding:8px }
+
 /* Hide the legacy abilities column (we'll expose via hover/tooltip and modal) */
-#ability-list{display:none}
+#ability-list { display:none }
+
 /* Ability tooltip */
-.ability-tooltip{position:fixed;background:var(--section-bg);color:var(--text-color);border:1px solid rgba(0,0,0,0.12);padding:8px;border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,0.12);max-width:320px;z-index:9999;display:none}
+.ability-tooltip {
+  position: fixed;
+  background: var(--section-bg);
+  color: var(--text-color);
+  border: 1px solid rgba(0,0,0,0.12);
+  padding: 8px;
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  max-width: 320px;
+  z-index: 9999;
+  display: none;
+}
+
 /* Character panel */
-#character-panel{display:flex;gap:8px;align-items:center}
-#character-portrait{width:var(--portrait-size);height:var(--portrait-size);border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:48px;background:#fff;border:1px solid rgba(0,0,0,0.06)}
-#character-portrait img{width:100%;height:100%;object-fit:cover;display:block}
-#character-info-btn{background:transparent;border:1px solid rgba(0,0,0,0.06);padding:6px;border-radius:6px}
+#character-panel { display:flex; gap:8px; align-items:center }
+#character-portrait { width:var(--portrait-size); height:var(--portrait-size); border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:48px; background:#fff; border:1px solid rgba(0,0,0,0.06) }
+#character-portrait img { width:100%; height:100%; object-fit:cover; display:block }
+#character-info-btn { background:transparent; border:1px solid rgba(0,0,0,0.06); padding:6px; border-radius:6px }
+
 /* Damage overlay when no image assets available */
-.char-damage-overlay{position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,0.45));opacity:0;transition:opacity .3s}
-.char-portrait-wrap{position:relative;width:var(--portrait-size);height:var(--portrait-size)}
+.char-damage-overlay { position:absolute; inset:0; background:linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.45)); opacity:0; transition:opacity .3s }
+.char-portrait-wrap { position:relative; width:var(--portrait-size); height:var(--portrait-size) }
+
+/* Responsive fallback: on small screens make the log inline & not fixed */
+@media (max-width: 1023px) {
+  .event-log-sidebar {
+    position: static;
+    transform: none;
+    width: 100%;
+    max-height: none;
+    box-shadow: none;
+    border-left: none;
+    margin-top: 12px;
+  }
+  #main-game-wrapper.sidebar-offset { margin-right: 0; }
+}
+
+/* Alignment cleanups for even spacing */
+.section-box { display:block; }
+.section-box .text-xl, .section-box h3 { text-align: left; }
+
+/* Reduce width of buttons inside compact areas to avoid crowding */
+.ability-compact-btn, .action-btn { white-space: nowrap; font-size: 0.95rem; padding: 8px 10px; }
+
+/* Make sure clash visualizer sits above sidebar */
+#clash-visualizer { z-index: 99999; }
+
+/* extra alignment tweaks */
+#visuals-panel .text-center, #visuals-panel .flex { align-items:center; justify-content:center; }
+#player-sprite, #enemy-sprite { display:flex; flex-direction:column; align-items:center; justify-content:center; }
+#game-container { gap: 12px; }
+.section-box { margin-bottom: 8px; }
+#inventory-attacks .section-box, #abilities-compact, #compact-action-buttons { display:flex; flex-direction:column; align-items:stretch; }
