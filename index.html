@@ -22,15 +22,7 @@
         }
 
         
-        *** Begin Patch
-*** Update File: index.html
-@@
-     </script>
-+    <!-- Compact UI layout + runtime (injected) -->
-+    <link rel="stylesheet" href="ui-layout.css">
-+    <script src="ui-layout.js"></script>
- </body>
-*** End Patch
+  
         
         body {
             background-color: var(--primary-bg);
@@ -1495,4 +1487,15 @@ function init() {
 window.onload = init;
     </script>
 </body>
+
+          *** Begin Patch
+*** Update File: index.html
+@@
+     </script>
++    <!-- Compact UI layout + runtime (injected) -->
++    <link rel="stylesheet" href="ui-layout.css">
++    <script src="ui-layout.js"></script>
+ </body>
+*** End Patch
+    
 </html>
