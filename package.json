@@ -1,0 +1,1 @@
+{\n  "name": "psychic-doodle",\n  "version": "0.1.0",\n  "private": true,\n  "scripts": {\n    "start": "npx http-server ./ -p 8080",\n    "dev": "npx http-server ./ -p 8080",\n    "lint": "npx eslint . || true"\n  }\n}
