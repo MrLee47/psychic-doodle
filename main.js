@@ -1,4 +1,4 @@
-/* Chronicles of Heroes: Core Game and Combat Logic - cleaned and fixed version */
+/* The Game: Core Game and Combat Logic - cleaned and fixed version */
 
 /* NOTE:
  - This file is the fixed main.js ready to paste into your repository at main.js.
